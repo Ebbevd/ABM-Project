@@ -20,6 +20,7 @@ class Households(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.is_adapted = False  # Initial adaptation status set to False
+        self.risk_behavior = random.random()
         
         # getting flood map values
         # Get a random location on the map
@@ -54,11 +55,26 @@ class Households(Agent):
         """Count the number of neighbors within a given radius (number of edges away). This is social relation and not spatial"""
         friends = self.model.grid.get_neighborhood(self.pos, include_center=False, radius=radius)
         return len(friends)
+    
+    def count_friends_adapted(self, radius):
+        #here we can count how many of the friends are adapted.
+        friends = self.model.grid.get_neighbors(self.pos)
+        amount = 0
+        for i in friends:
+            if i.is_adapted:
+                amount += 1
+        return amount
 
     def step(self):
         # Logic for adaptation based on estimated flood damage and a random chance.
         # These conditions are examples and should be refined for real-world applications.
-        if self.flood_damage_estimated > 0.15 and random.random() < 0.2:
+        
+        #here we can check how many neighbors are adapted, if there
+        friends_adapted = self.count_friends_adapted(radius=1)
+        if friends_adapted != 0:
+            self.risk_behavior = self.risk_behavior/friends_adapted #can make this more complex if wanted
+
+        if self.flood_damage_estimated > 0.15 and self.risk_behavior < 0.2:
             self.is_adapted = True  # Agent adapts to flooding
         
 # Define the Government agent class
