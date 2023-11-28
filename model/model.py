@@ -48,7 +48,7 @@ class AdaptationModel(Model):
         
         # defining the variables and setting the values
         self.number_of_households = number_of_households  # Total number of household agents
-        self.seed = seed
+        self.seed = seed #?
         self.max_damage_dol_per_sqm = max_damage_dol_per_sqm
 
         # network
