@@ -65,6 +65,12 @@ class Households(Agent):
                 amount += 1
         return amount
 
+    def prospect_theory_score(self, neighbors):
+        #score between 1 and 0
+        #agent looks at the problem subjectively so if they have allready experianced a flood or if there is media interaction they will behave diffently
+        #check if a neighbor has been flooded if so the agent is more 
+        pass
+
     def step(self):
         # Logic for adaptation based on estimated flood damage and a random chance.
         # These conditions are examples and should be refined for real-world applications.
@@ -90,3 +96,11 @@ class Government(Agent):
         pass
 
 # More agent classes can be added here, e.g. for insurance agents.
+
+class Media(Agent):
+    def __init__(self, unique_id, model):
+        super().__init__(unique_id, model)
+
+    def step(self):
+        # The government agent doesn't perform any actions.
+        pass
