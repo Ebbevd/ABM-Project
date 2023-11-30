@@ -10,7 +10,7 @@ from functions import floodplain_multipolygon
 
 
 # Define the Households agent class
-class Households(Agent):
+class Households(Agent): #money
     """
     An agent representing a household in the model.
     Each household has a flood depth attribute which is randomly assigned for demonstration purposes.
@@ -20,7 +20,8 @@ class Households(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.is_adapted = False  # Initial adaptation status set to False
-        self.risk_behavior = random.random()
+        self.risk_behavior = random.random() #this would be nice as a normal curve
+        self.type = "household"
         
         # getting flood map values
         # Get a random location on the map
@@ -69,6 +70,7 @@ class Households(Agent):
         #score between 1 and 0
         #agent looks at the problem subjectively so if they have allready experianced a flood or if there is media interaction they will behave diffently
         #check if a neighbor has been flooded if so the agent is more 
+        #percieved risk declines after a while
         pass
 
     def step(self):
@@ -80,13 +82,16 @@ class Households(Agent):
         if friends_adapted != 0:
             self.risk_behavior = self.risk_behavior/friends_adapted #can make this more complex if wanted
 
-        if self.flood_damage_estimated > 0.15 and self.risk_behavior < 0.2:
+        if self.flood_damage_estimated > 0.15 and self.risk_behavior < 0.2: #why these numbers
             self.is_adapted = True  # Agent adapts to flooding
         
 # Define the Government agent class
 class Government(Agent):
     """
     A government agent that currently doesn't perform any actions.
+    - subsidies 
+    - regulations
+    - measurements 
     """
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
@@ -96,11 +101,22 @@ class Government(Agent):
         pass
 
 # More agent classes can be added here, e.g. for insurance agents.
-
 class Media(Agent):
+    def __init__(self, unique_id, model):
+        super().__init__(unique_id, model)
+        self.type = "Media"
+    
+    def count_friends(self, radius):
+        pass
+
+    def step(self):
+        agents = self.model.schedule.agents
+        households = [ agent if agent.type == "household" else None for agent in agents ] #here there is one empty agent in the list
+
+class Insurance(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
 
     def step(self):
-        # The government agent doesn't perform any actions.
         pass
+

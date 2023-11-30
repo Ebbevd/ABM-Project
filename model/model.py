@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import random
 
 # Import the agent class(es) from agents.py
-from agents import Households
+from agents import Households, Media
 
 # Import functions from functions.py
 from functions import get_flood_map_data, calculate_basic_flood_damage
@@ -73,6 +73,9 @@ class AdaptationModel(Model):
             household = Households(unique_id=i, model=self)
             self.schedule.add(household)
             self.grid.place_agent(agent=household, node_id=node)
+        
+        media = Media(unique_id=i+1, model=self)
+        self.schedule.add(media)
 
         # You might want to create other agents here, e.g. insurance agents.
 
@@ -89,7 +92,7 @@ class AdaptationModel(Model):
                         "FloodDamageActual" : "flood_damage_actual",
                         "IsAdapted": "is_adapted",
                         "FriendsCount": lambda a: a.count_friends(radius=1),
-                        "location":"location",
+                        "location": "location",
                         # ... other reporters ...
                         }
         #set up the data collector 
@@ -185,14 +188,17 @@ class AdaptationModel(Model):
         with a more sound procedure (e.g., you can devide the floop map into zones and 
         assume local flooding instead of global flooding). The actual flood depth can be 
         estimated differently
+
+        Model water level and when the government takes meassures we can handle a higher water level.
         """
-        if self.schedule.steps == 5:
+        if self.schedule.steps == 5: 
             for agent in self.schedule.agents:
-                # Calculate the actual flood depth as a random number between 0.5 and 1.2 times the estimated flood depth
-                agent.flood_depth_actual = random.uniform(0.5, 1.2) * agent.flood_depth_estimated #floodingdepth is random
-                # calculate the actual flood damage given the actual flood depth
-                agent.flood_damage_actual = calculate_basic_flood_damage(agent.flood_depth_actual)
-        
+                if agent.type == 'household':
+                    # Calculate the actual flood depth as a random number between 0.5 and 1.2 times the estimated flood depth
+                    agent.flood_depth_actual = random.uniform(0.5, 1.2) * agent.flood_depth_estimated #floodingdepth is random
+                    # calculate the actual flood damage given the actual flood depth
+                    agent.flood_damage_actual = calculate_basic_flood_damage(agent.flood_depth_actual)
+            
         # Collect data and advance the model by one step
         self.datacollector.collect(self)
         self.schedule.step()
