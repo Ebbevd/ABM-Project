@@ -1,1 +1,7 @@
 --> create a way to turn on and of the social rules
+--> Develop an RBB that incorporates Prospect Theory to
+represent household risk evaluation and decision-
+making in flood-prone areas. https://onlinelibrary-wiley-com.tudelft.idm.oclc.org/doi/10.1111/risa.12740
+
+Create a prospet theory block that takes media coverage and other nodes that have been floding and calculates a score that 
+determines when they are adapted and when not
