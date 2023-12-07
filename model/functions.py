@@ -183,3 +183,16 @@ def prospect_theory_score(friends_adapted, risk_behavior, number_of_households, 
     score = risk_behavior * social_score
         
     return score
+
+def risk_score():
+    #creating a normal random distro between 0 and 1
+    #the avarage was tested to be between 0.48 and 0.53
+    dist = np.random.normal(0.5,0.5,1000) #
+    dist_positive = dist[dist>=0]
+    risk = dist_positive[dist_positive <= 1]
+    
+    risk_pick = risk[np.random.randint( 0, len(risk) ) ]
+
+    #print(risk)
+    #print(np.average(risk))
+    return risk_pick

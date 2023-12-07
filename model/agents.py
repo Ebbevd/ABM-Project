@@ -6,7 +6,7 @@ from shapely import contains_xy
 import numpy as np
 
 # Import functions from functions.py
-from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score
+from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score, risk_score
 from functions import floodplain_multipolygon
 
 
@@ -21,7 +21,7 @@ class Households(Agent): #money
     def __init__(self, unique_id, model, adaptation_threshold):
         super().__init__(unique_id, model)
         self.is_adapted = False  # Initial adaptation status set to False
-        self.risk_behavior = random.random() #this would be nice as a normal curve
+        self.risk_behavior = risk_score() #this would be nice as a normal curve
         self.type = "household"
         self.adaptation_threshold = adaptation_threshold 
         self.adaptation_number = 0
