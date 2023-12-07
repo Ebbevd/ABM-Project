@@ -42,6 +42,8 @@ class AdaptationModel(Model):
                  number_of_edges = 3,
                  # number of nearest neighbours for WS social network
                  number_of_nearest_neighbours = 5,
+                 media_coverage = 0,
+                 adaptation_threshold = 0.3
                  ):
         
         super().__init__(seed = seed)
@@ -50,7 +52,8 @@ class AdaptationModel(Model):
         self.number_of_households = number_of_households  # Total number of household agents
         self.seed = seed #?
         self.max_damage_dol_per_sqm = max_damage_dol_per_sqm
-
+        self.media_coverage = media_coverage
+        self.adaptation_threshold = adaptation_threshold
         # network
         self.network = network # Type of network to be created
         self.probability_of_network_connection = probability_of_network_connection
@@ -70,7 +73,7 @@ class AdaptationModel(Model):
 
         # create households through initiating a household on each node of the network graph
         for i, node in enumerate(self.G.nodes()):
-            household = Households(unique_id=i, model=self)
+            household = Households(unique_id=i, model=self, adaptation_threshold=self.adaptation_threshold)
             self.schedule.add(household)
             self.grid.place_agent(agent=household, node_id=node)
         
@@ -82,6 +85,7 @@ class AdaptationModel(Model):
         # Data collection setup to collect data
         model_metrics = {
                         "total_adapted_households": self.total_adapted_households,
+                        "media_coverage": self.current_media_attention
                         # ... other reporters ...
                         }
         
@@ -92,7 +96,7 @@ class AdaptationModel(Model):
                         "FloodDamageActual" : "flood_damage_actual",
                         "IsAdapted": "is_adapted",
                         "FriendsCount": lambda a: a.count_friends(radius=1),
-                        "location": "location",
+                        "location": "location"
                         # ... other reporters ...
                         }
         #set up the data collector 
@@ -155,6 +159,12 @@ class AdaptationModel(Model):
         #BE CAREFUL THAT YOU MAY HAVE DIFFERENT AGENT TYPES SO YOU NEED TO FIRST CHECK IF THE AGENT IS ACTUALLY A HOUSEHOLD AGENT USING "ISINSTANCE"
         adapted_count = sum([1 for agent in self.schedule.agents if isinstance(agent, Households) and agent.is_adapted])
         return adapted_count
+    
+    def current_media_attention(self): #purely for data collection
+        return self.media_coverage
+    
+    def set_media_attention(self, val):
+        self.media_coverage = val
     
     def plot_model_domain_with_agents(self):
         fig, ax = plt.subplots()

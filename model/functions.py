@@ -163,3 +163,23 @@ def calculate_basic_flood_damage(flood_depth):
         flood_damage = 0.1746 * math.log(flood_depth) + 0.6483
     return flood_damage
 
+def prospect_theory_score(friends_adapted, risk_behavior, number_of_households, media_coverage, flood_damage_estimated):
+    #score between 1 and 0
+    #agent looks at the problem subjectively so if they have allready experianced a flood or if there is media interaction they will behave diffently
+    #check if a neighbor has been flooded if so the agent is more 
+    #percieved risk declines after a while
+    friend_score = (len(friends_adapted)/(number_of_households-1))
+  
+    media_score = 0
+
+    if media_coverage == 1: #small coverage 
+        media_score = 0.5
+    elif media_coverage == 2:
+        media_score = 1
+    else:
+        media_score = 0
+    
+    social_score = (friend_score + media_score + flood_damage_estimated)/3
+    score = risk_behavior * social_score
+        
+    return score

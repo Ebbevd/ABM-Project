@@ -6,10 +6,8 @@ from shapely import contains_xy
 import numpy as np
 
 # Import functions from functions.py
-from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage
+from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score
 from functions import floodplain_multipolygon
-
-f = open("logs/logs.txt", "a")
 
 
 # Define the Households agent class
@@ -20,11 +18,12 @@ class Households(Agent): #money
     In a real scenario, this would be based on actual geographical data or more complex logic.
     """
 
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, model, adaptation_threshold):
         super().__init__(unique_id, model)
         self.is_adapted = False  # Initial adaptation status set to False
         self.risk_behavior = random.random() #this would be nice as a normal curve
         self.type = "household"
+        self.adaptation_threshold = adaptation_threshold 
         self.adaptation_number = 0
         # getting flood map values
         # Get a random location on the map
@@ -69,40 +68,21 @@ class Households(Agent): #money
                 friends_adapted.append(i)
         return friends
 
-    def prospect_theory_score(self, friends_adapted, media):
-        #score between 1 and 0
-        #agent looks at the problem subjectively so if they have allready experianced a flood or if there is media interaction they will behave diffently
-        #check if a neighbor has been flooded if so the agent is more 
-        #percieved risk declines after a while
-        friend_score = (len(friends_adapted)/self.model.number_of_households)/2
-        media_score = 0
-
-        if media.coverage == 1:
-            media_score = 0.25
-        else:
-            media_score = 0.5
-        
-        return friend_score+media_score
-
     def decide_if_adapted(self, prospect_score):
-        total_avarge = (self.risk_behavior + prospect_score + self.flood_damage_estimated)/3
-        f.write(f"[Step {self.model.schedule.steps}] The scores are risk:{self.risk_behavior}, prospect_score: {prospect_score} and flood_damage est:{self.flood_damage_estimated} so the avarage is {total_avarge} (at 0.57 the agent will adapt)\n")
-        if total_avarge > 0.57:
+        if self.model.schedule.steps % 10 == 0: #give an update every 10 steps
+            f = open("logs/logs.txt", "a")
+            f.write(f"[Step: {self.model.schedule.steps}] Agent: {self.unique_id} The scores are risk:{self.risk_behavior}, prospect_score: {prospect_score} and flood_damage est:{self.flood_damage_estimated} \n")
+            f.close()
+            
+        if prospect_score > self.adaptation_threshold: #adaptation by prospect theory 
             return True
-        else:
-            return False
-
 
     def step(self):
         # Logic for adaptation based on estimated flood damage and a random chance.
         # These conditions are examples and should be refined for real-world applications.
         #here we can check how many neighbors are adapted, if there
         friends_adapted = self.count_friends_adapted(radius=1)
-        media = [ ]
-        for agent in self.model.schedule.agents:
-            if agent.type =='media':
-                media.append(agent)
-        prospect_score = self.prospect_theory_score(friends_adapted=friends_adapted, media=media[0])
+        prospect_score = prospect_theory_score(friends_adapted=friends_adapted, risk_behavior=self.risk_behavior, number_of_households=self.model.number_of_households, media_coverage=self.model.media_coverage, flood_damage_estimated= self.flood_damage_estimated)
 
         if self.decide_if_adapted(prospect_score): #takes two more from self.
             self.is_adapted = True  # Agent adapts to flooding
@@ -167,13 +147,17 @@ class Media(Agent):
 
         if avarge_damage < 0.2: #later we can base these numbers on sources. 
             self.coverage = 0
+            self.model.set_media_attention(0)
         elif avarge_damage < 0.5:
             self.coverage = 1
+            self.model.set_media_attention(1)
         else:
             self.coverage = 2
-        
-        f.write(f"ther avarage damage is {avarge_damage} and the coverage {self.coverage_types[self.coverage]}\n")
-
+            self.model.set_media_attention(2)
+        if self.model.schedule.steps % 10 == 0: #give an update every 10 steps
+            f = open("logs/logs.txt", "a")
+            f.write(f"Step: {self.model.schedule.steps} Agent: Media ther avarage damage is {avarge_damage} and the coverage {self.coverage_types[self.coverage]}\n")
+            f.close()
 
 
 class Insurance(Agent):
