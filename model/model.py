@@ -13,7 +13,7 @@ import random
 from agents import Households, Media
 
 # Import functions from functions.py
-from functions import get_flood_map_data, calculate_basic_flood_damage
+from functions import get_flood_map_data, calculate_basic_flood_damage, get_rain_list
 from functions import map_domain_gdf, floodplain_gdf
 
 
@@ -40,6 +40,7 @@ class AdaptationModel(Model):
                  probability_of_network_connection = 0.4,
                  # number of edges for BA network
                  number_of_edges = 3,
+                 number_of_steps = 20,
                  # number of nearest neighbours for WS social network
                  number_of_nearest_neighbours = 5,
                  media_coverage = 0,
@@ -51,6 +52,8 @@ class AdaptationModel(Model):
         # defining the variables and setting the values
         self.number_of_households = number_of_households  # Total number of household agents
         self.seed = seed #?
+        self.number_of_steps = number_of_steps
+        self.number_of_floods = 0
         self.max_damage_dol_per_sqm = max_damage_dol_per_sqm
         self.media_coverage = media_coverage
         self.adaptation_threshold = adaptation_threshold
@@ -59,6 +62,7 @@ class AdaptationModel(Model):
         self.probability_of_network_connection = probability_of_network_connection
         self.number_of_edges = number_of_edges
         self.number_of_nearest_neighbours = number_of_nearest_neighbours
+        self.rain_values = get_rain_list(number_of_steps)
 
         # generating the graph according to the network used and the network parameters specified
         self.G = self.initialize_network()
@@ -85,7 +89,8 @@ class AdaptationModel(Model):
         # Data collection setup to collect data
         model_metrics = {
                         "total_adapted_households": self.total_adapted_households,
-                        "media_coverage": self.current_media_attention
+                        "media_coverage": self.current_media_attention,
+                        "number_of_floods": self.get_number_of_floods
                         # ... other reporters ...
                         }
         
@@ -163,6 +168,9 @@ class AdaptationModel(Model):
     def current_media_attention(self): #purely for data collection
         return self.media_coverage
     
+    def get_number_of_floods(self):
+        return self.number_of_floods
+    
     def set_media_attention(self, val):
         self.media_coverage = val
     
@@ -188,6 +196,12 @@ class AdaptationModel(Model):
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
         plt.show()
+    
+    def decide_if_flood(self, rain_value):
+        if rain_value > 0.3:
+            return True
+        else:
+            return False
 
     def step(self):
         """
@@ -201,7 +215,9 @@ class AdaptationModel(Model):
 
         Model water level and when the government takes meassures we can handle a higher water level.
         """
-        if self.schedule.steps == 5: 
+        rain_value = self.rain_values[self.schedule.steps]
+        if self.decide_if_flood(float(rain_value)): #a function that takes the current weather and decides if there is a flood yes/no
+            self.number_of_floods += 1
             for agent in self.schedule.agents:
                 if agent.type == 'household':
                     # Calculate the actual flood depth as a random number between 0.5 and 1.2 times the estimated flood depth

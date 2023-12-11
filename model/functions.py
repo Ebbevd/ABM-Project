@@ -11,6 +11,7 @@ import math
 from shapely import contains_xy
 from shapely import prepare
 import geopandas as gpd
+import pandas as pd
 
 def set_initial_values(input_data, parameter, seed):
     """
@@ -196,3 +197,15 @@ def risk_score():
     #print(risk)
     #print(np.average(risk))
     return risk_pick
+
+
+def get_rain_list(steps):
+    df = pd.read_csv(r'../input_data/Delft_rain_data.csv', skiprows=27, on_bad_lines='skip', delimiter=",")
+    df = df[:8784]
+    df = df['Rain [mm/hr]']
+    values = []
+    for i in range(steps):
+        value = df[np.random.randint(0, len(df))]
+        values.append(value)
+    
+    return values
