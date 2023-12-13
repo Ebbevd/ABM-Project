@@ -5,3 +5,6 @@ making in flood-prone areas. https://onlinelibrary-wiley-com.tudelft.idm.oclc.or
 
 Create a prospet theory block that takes media coverage and other nodes that have been floding and calculates a score that 
 determines when they are adapted and when not
+
+In the model add the number of zones, determine for each zone if there is a flood there yes, no. Than check for the agent if they are in the zone.
+If in the flooded zone get the actual flood damage. 

@@ -142,7 +142,7 @@ def get_position_flood(bound_l, bound_r, bound_t, bound_b, img, seed):
     row, col = img.index(x, y)
     return x, y, row, col
 
-def calculate_basic_flood_damage(flood_depth):
+def calculate_basic_flood_damage(flood_depth): 
     """
     To get flood damage based on flood depth of household
     from de Moer, Huizinga (2017) with logarithmic regression over it.
