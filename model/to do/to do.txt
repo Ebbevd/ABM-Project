@@ -3,12 +3,15 @@
 represent household risk evaluation and decision-
 making in flood-prone areas. https://onlinelibrary-wiley-com.tudelft.idm.oclc.org/doi/10.1111/risa.12740
 
-Create a prospet theory block that takes media coverage and other nodes that have been floding and calculates a score that 
-determines when they are adapted and when not
-
-In the model add the number of zones, determine for each zone if there is a flood there yes, no. Than check for the agent if they are in the zone.
-If in the flooded zone get the actual flood damage. 
-
-
-added moving of agents when adapting and added a function that moves them to a heigher place making. Agents can also become unadapted when the estimated flood level becomes too high again in their area.
-Also adding zones
+-------------------------------------------------------------------------------------------------------------
+New:
+- Media agents
+- Floods are based on real rain data 
+- Floods can be devided into multiple zones but as of yet only along the x axis 
+- Agents can not be adapted if there is still a risk, you can see they unadapt and adapt again a lot. We should change this with a governing body
+______________________________________________________________________________________________________________
+To do:
+- Introduce money
+- Introduce government
+- intorduce insurance 
+- improve data analysis

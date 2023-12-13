@@ -86,6 +86,8 @@ class Households(Agent): #money
         """
         Here the agent decides if they are adapted, if they are they move location. The model saves high locations and the actor will move to one of those locations creating clustering.
         If the flood dept still is very high they will be not adapted any more but there is a deley of 4 steps in before they are able to move again. 
+        
+        Now we can use the municipality to create better this process 
         """
         if self.flood_depth_estimated < 0.025:
             self.model.heigh_locations.append(self.location)
