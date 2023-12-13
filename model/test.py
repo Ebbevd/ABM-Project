@@ -1,33 +1,31 @@
-#create a function that takes past years weather events and grabs random data for each step
-import pandas as pd
+import random
 import numpy as np
+import math
+from shapely import contains_xy
+from shapely import prepare
+import geopandas as gpd
+import pandas as pd
 
 
+shapefile_path = 'input_data/model_domain/houston_model/houston_model.shp'
+floodplain_path = 'input_data/floodplain/floodplain_area.shp'
 
-def get_rain_list(steps):
-    df = pd.read_csv('input_data/Delft_rain_data.csv', skiprows=27, on_bad_lines='skip', delimiter=",")
-    df = df[:8784]
-    df = df['Rain [mm/hr]']
-    print(df)
-    values = []
-    for i in range(steps):
-        value = df[np.random.randint(0, len(df))]
-        values.append(value)
-    
-    return values
+# Model area setup
+map_domain_gdf = gpd.GeoDataFrame.from_file(shapefile_path)
+map_domain_gdf = map_domain_gdf.to_crs(epsg=26915)
+map_domain_geoseries = map_domain_gdf['geometry']
+map_minx, map_miny, map_maxx, map_maxy = map_domain_geoseries.total_bounds
+map_domain_polygon = map_domain_geoseries[0]  # The geoseries contains only one polygon
+prepare(map_domain_polygon)
 
-def decide_if_flood(rain_value):
-    if rain_value > 0.3:
-        return True
-    else:
-        return False
+#print(map_domain_polygon)
 
+# Floodplain setup
+floodplain_gdf = gpd.GeoDataFrame.from_file(floodplain_path)
+floodplain_gdf = floodplain_gdf.to_crs(epsg=26915)
+floodplain_geoseries = floodplain_gdf['geometry']
+floodplain_multipolygon = floodplain_geoseries[0]  # The geoseries contains only one multipolygon
+prepare(floodplain_multipolygon)
 
-if __name__ == "__main__":
-    values = get_rain_list(40)
-    print(values)
-    print(f"Max value of {max(values)}")
-    for i in values:
-        flood = decide_if_flood(float(i))
-        print(flood)
-    
+print(floodplain_multipolygon)
+

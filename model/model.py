@@ -13,7 +13,7 @@ import random
 from agents import Households, Media
 
 # Import functions from functions.py
-from functions import get_flood_map_data, calculate_basic_flood_damage, get_rain_list
+from functions import get_flood_map_data, calculate_basic_flood_damage, get_rain_dict
 from functions import map_domain_gdf, floodplain_gdf
 
 
@@ -41,6 +41,8 @@ class AdaptationModel(Model):
                  # number of edges for BA network
                  number_of_edges = 3,
                  number_of_steps = 20,
+                 number_of_zones = 1,
+                 base_water_level = 0, #the base of the water level
                  # number of nearest neighbours for WS social network
                  number_of_nearest_neighbours = 5,
                  media_coverage = 0,
@@ -54,6 +56,11 @@ class AdaptationModel(Model):
         self.seed = seed #?
         self.number_of_steps = number_of_steps
         self.number_of_floods = 0
+        self.water_level = {}
+        self.number_of_zones = number_of_zones
+        self.rain_values = {}
+        self.heigh_locations = []
+        self.base_water_level = base_water_level
         self.max_damage_dol_per_sqm = max_damage_dol_per_sqm
         self.media_coverage = media_coverage
         self.adaptation_threshold = adaptation_threshold
@@ -62,7 +69,7 @@ class AdaptationModel(Model):
         self.probability_of_network_connection = probability_of_network_connection
         self.number_of_edges = number_of_edges
         self.number_of_nearest_neighbours = number_of_nearest_neighbours
-        self.rain_values = get_rain_list(number_of_steps)
+
 
         # generating the graph according to the network used and the network parameters specified
         self.G = self.initialize_network()
@@ -159,6 +166,8 @@ class AdaptationModel(Model):
         self.flood_map = rs.open(flood_map_path)
         self.band_flood_img, self.bound_left, self.bound_right, self.bound_top, self.bound_bottom = get_flood_map_data(
             self.flood_map)
+        
+        self.rain_values = get_rain_dict(self.number_of_steps, self.number_of_zones, self.bound_left, self.bound_right, self.bound_bottom, self.bound_top)
 
     def total_adapted_households(self):
         """Return the total number of households that have adapted."""
@@ -214,18 +223,29 @@ class AdaptationModel(Model):
         assume local flooding instead of global flooding). The actual flood depth can be 
         estimated differently
 
-        Model water level and when the government takes meassures we can handle a higher water level.
+        Now the water level will get higher because of rainfall this can cause a flood. If there is a flood the agent will determine the depth based
+        on the hight the agent is at. If the depth is really high the damage will get high and the agent will have a higher chance of adapting.
+        
+        The floods are devided into zones. The zones are now only on the x axis these still have to be expanded to the y axis 
         """
-        rain_value = self.rain_values[self.schedule.steps]
-        if self.decide_if_flood(float(rain_value)): #a function that takes the current weather and decides if there is a flood yes/no
-            self.number_of_floods += 1
-            for agent in self.schedule.agents:
-                if agent.type == 'household':
-                    # Calculate the actual flood depth as a random number between 0.5 and 1.2 times the estimated flood depth
-                    agent.flood_depth_actual = random.uniform(0.5, 1.2) * agent.flood_depth_estimated #floodingdepth is random
-                    # calculate the actual flood damage given the actual flood depth
-                    agent.flood_damage_actual = calculate_basic_flood_damage(agent.flood_depth_actual)
-            
+        rain_dict_keys = self.rain_values.keys()
+        for i in rain_dict_keys:
+            rain_value = self.rain_values[i] #this is a list
+            rain_value = rain_value[self.schedule.steps]
+            if self.decide_if_flood(float(rain_value)):
+                self.number_of_floods += 1
+                water_level = self.base_water_level + float(rain_value) #this should be based on the location of the agent
+                self.water_level[i] = water_level
+                
+        for agent in self.schedule.agents:
+            if agent.type == 'household':
+                # Calculate the actual flood depth as a random number between 0.5 and 1.2 times the estimated flood depth
+                for i in self.water_level:
+                    if i[0] <= agent.location.x <= i[1]:
+                        agent.flood_depth_actual = self.water_level[i] + agent.flood_depth_estimated #floodingdepth is random
+                        # calculate the actual flood damage given the actual flood depth
+                        agent.flood_damage_actual = calculate_basic_flood_damage(agent.flood_depth_actual)
+                
         # Collect data and advance the model by one step
         self.datacollector.collect(self)
         self.schedule.step()

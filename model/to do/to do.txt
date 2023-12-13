@@ -8,3 +8,7 @@ determines when they are adapted and when not
 
 In the model add the number of zones, determine for each zone if there is a flood there yes, no. Than check for the agent if they are in the zone.
 If in the flooded zone get the actual flood damage. 
+
+
+added moving of agents when adapting and added a function that moves them to a heigher place making. Agents can also become unadapted when the estimated flood level becomes too high again in their area.
+Also adding zones

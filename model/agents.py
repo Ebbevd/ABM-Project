@@ -6,7 +6,7 @@ from shapely import contains_xy
 import numpy as np
 
 # Import functions from functions.py
-from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score, risk_score
+from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score, risk_score, move
 from functions import floodplain_multipolygon
 
 
@@ -24,6 +24,8 @@ class Households(Agent): #money
         self.risk_behavior = risk_score() #this would be nice as a normal curve
         self.type = "household"
         self.adaptation_threshold = adaptation_threshold 
+        self.moved = False
+        self.step_adapted = 0
         self.adaptation_number = 0
         # getting flood map values
         # Get a random location on the map
@@ -81,11 +83,32 @@ class Households(Agent): #money
         # Logic for adaptation based on estimated flood damage and a random chance.
         # These conditions are examples and should be refined for real-world applications.
         #here we can check how many neighbors are adapted, if there
+        """
+        Here the agent decides if they are adapted, if they are they move location. The model saves high locations and the actor will move to one of those locations creating clustering.
+        If the flood dept still is very high they will be not adapted any more but there is a deley of 4 steps in before they are able to move again. 
+        """
+        if self.flood_depth_estimated < 0.025:
+            self.model.heigh_locations.append(self.location)
+        
         friends_adapted = self.count_friends_adapted(radius=1)
         prospect_score = prospect_theory_score(friends_adapted=friends_adapted, risk_behavior=self.risk_behavior, number_of_households=self.model.number_of_households, media_coverage=self.model.media_coverage, flood_damage_estimated= self.flood_damage_estimated)
 
-        if self.decide_if_adapted(prospect_score): #takes two more from self.
-            self.is_adapted = True  # Agent adapts to flooding
+        if self.decide_if_adapted(prospect_score) and self.moved == False: #takes two more from self.
+            self.is_adapted = True  # Agent adapts to flooding so it moves to a higher area  
+            self.step_adapted = self.model.schedule.steps
+            if self.model.heigh_locations:
+                location = self.model.heigh_locations[random.randint(0, len(self.model.heigh_locations)-1)]
+                x = location.x
+                y= location.y 
+                x,y = move(x,y)
+                self.location = Point(x, y)
+            else:
+                x, y = generate_random_location_within_map_domain() #agent moves to a different spot where he is adapted, idealy this would be to a higher location but I don't know how to do this
+                self.location = Point(x, y)
+            self.moved = True
+        elif self.flood_depth_estimated > 0.5 and self.model.schedule.steps - self.step_adapted > 4: #when the flood depth in theory can be higher than the actor is no longer adapted, value based on function calculate basic flood damage
+            self.is_adapted = False
+            self.moved = False #gotte reset this
         
 # Define the Government agent class
 class Government(Agent):

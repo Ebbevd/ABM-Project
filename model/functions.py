@@ -100,6 +100,15 @@ def generate_random_location_within_map_domain():
         if contains_xy(map_domain_polygon, x, y):
             return x, y
 
+def move(x, y):
+     while True:
+        # generate random location coordinates within square area of map domain
+        x = x + random.randint(-1000, 1000)
+        x = x + random.randint(-1000, 1000)
+        # check if the point is within the polygon, if so, return the coordinates
+        if contains_xy(map_domain_polygon, x, y):
+            return x, y
+
 def get_flood_depth(corresponding_map, location, band):
     """ 
     To get the flood depth of a specific location within the model domain.
@@ -119,7 +128,6 @@ def get_flood_depth(corresponding_map, location, band):
     row = abs(row)
     depth = band[row -1, col -1]
     return depth
-   
 
 def get_position_flood(bound_l, bound_r, bound_t, bound_b, img, seed):
     """ 
@@ -185,7 +193,7 @@ def prospect_theory_score(friends_adapted, risk_behavior, number_of_households, 
     score = risk_behavior * social_score
         
     return score
-
+    
 def risk_score():
     #creating a normal random distro between 0 and 1
     #the avarage was tested to be between 0.48 and 0.53
@@ -210,3 +218,27 @@ def get_rain_list(steps):
         values.append(value)
     
     return values
+
+def get_rain_dict(steps, number_of_zones, b_l, b_r, b_b, b_t): #devide the zones can do y later
+    rain_dict = {}
+    x = b_l + b_r
+    #y = b_b + b_t
+    x = x/number_of_zones
+    #y = y/number_of_zones
+    
+    for i in range(number_of_zones):
+        if i == 0:
+            cord = []
+            cord.append(0)
+            cord.append(x*(i+1))
+            x = x*(i+1)
+        else:
+            cord = []
+            cord.append(x)
+            cord.append(x*(i+1))
+            x = x*(i+1)
+            
+        values = get_rain_list(steps)
+        rain_dict[tuple(cord)] = values
+    
+    return rain_dict
