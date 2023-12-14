@@ -25,6 +25,7 @@ class Households(Agent): #money
         self.type = "household"
         self.adaptation_threshold = adaptation_threshold 
         self.moved = False
+        self.money = random.randint(1000,10000)
         self.step_adapted = 0
         self.adaptation_number = 0
         # getting flood map values
@@ -78,6 +79,16 @@ class Households(Agent): #money
             
         if prospect_score > self.adaptation_threshold: #adaptation by prospect theory 
             return True
+    
+    def pay_taxes(self):
+        for agent in self.model.schedule.agents:
+            if agent.type == "government" and self.money >= self.model.tax_rate:
+                self.money -= self.model.tax_rate 
+                agent.money += self.model.tax_rate
+    
+    def earn_money(self):
+        self.money += random.randint(500, 3000)
+
 
     def step(self):
         # Logic for adaptation based on estimated flood damage and a random chance.
@@ -89,6 +100,8 @@ class Households(Agent): #money
         
         Now we can use the municipality to create better this process 
         """
+        self.pay_taxes() #first pay tax
+        self.earn_money() #than earn money
         if self.flood_depth_estimated < 0.025:
             self.model.heigh_locations.append(self.location)
         
@@ -120,9 +133,11 @@ class Government(Agent):
     - regulations
     - measurements 
     """
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, model, money):
         super().__init__(unique_id, model)
         self.type = 'government'
+        self.money = money
+        self.policy = None
     
     def list_adapted(self, agents):
         adapted = []
@@ -130,15 +145,69 @@ class Government(Agent):
             if a.is_adapted:
                 adapted.append(a)
         return adapted
+    
+    def count_friends(self, radius): #has to be here because of the lamda function in the model can change this later
+        pass
+
+    def expected_damage(self, households):
+        total = 0
+        for agent in households:
+            total += agent.flood_damage_estimated
+        
+        if total != 0:
+            return total/len(households)
+        else:
+            return 0
+    
+    def actual_damage(self, households):
+        total = 0
+        for agent in households:
+            total += agent.flood_damage_actual
+        
+        if total != 0:
+            return total/len(households)
+        else:
+            return 0
+    
+    def decide_policy(self, households, adapted_households, money_available):
+        policies = ['None', 'Dijks', 'Water locks']
+        policy = 'None'
+        ratio_adapted = len(adapted_households)/len(households)
+        expected_damage = self.expected_damage(households=households)
+        actual_damage = self.actual_damage(households=households)
+
+        policy_number = (ratio_adapted + expected_damage + actual_damage)/3
+        print(policy_number)
+
+        if 0.3 <= policy_number <= 0.6 and money_available > 1000000: #check how expencive dijks are
+            policy = policies[1]
+            self.model.set_current_policy(policy)
+            self.money -= 1000000
+        if policy_number >= 0.6 and money_available > 5000000:
+            policy = policies[2]
+            self.model.set_current_policy(policy)
+            self.money -= 5000000
+        return policy
+
+    def spend_on_other_expences(self):
+        expence = random.randint(10000, 100000)
+        if self.money >= expence:
+            self.money -= expence
+        else:
+            self.money = 0
+        
 
     def step(self):
         agents = self.model.schedule.agents
-        households = [ agent if agent.type == "household" else None for agent in agents ] #here there is one empty agent in the list
-        households.remove(None) #remove the None that gets put for all other agent types 
+        households = [ agent for agent in agents if agent.type == "household" ] #here there is one empty agent in the list
         adapted_households = self.list_adapted(households)
-
-        amount_adapted = len(adapted_households) #amount of households already adapted 
-        pass
+        #amount_adapted = len(adapted_households) #amount of households already adapted 
+        self.spend_on_other_expences() #need to spend money on other things as well
+        
+        #If the flood damage is high and there are little households adaptd #check the policy every 5 steps and 
+        if self.model.schedule.steps % 5 == 0:
+            self.policy = self.decide_policy(households=households, adapted_households=adapted_households, money_available=self.money)
+            # Implement the policy
 
 # More agent classes can be added here, e.g. for insurance agents.
 class Media(Agent):
@@ -166,8 +235,7 @@ class Media(Agent):
 
     def step(self):
         agents = self.model.schedule.agents
-        households = [ agent if agent.type == "household" else None for agent in agents ] #here there is one empty agent in the list
-        households.remove(None) #remove the None that gets put for all other agent types 
+        households = [ agent for agent in agents if agent.type == "household" ] #here there is one empty agent in the list
         avarge_damage = self.avarge_flood_damage(households)
 
         if avarge_damage < 0.2: #later we can base these numbers on sources. 

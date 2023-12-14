@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import random
 
 # Import the agent class(es) from agents.py
-from agents import Households, Media
+from agents import Households, Media, Government
 
 # Import functions from functions.py
 from functions import get_flood_map_data, calculate_basic_flood_damage, get_rain_dict
@@ -41,6 +41,8 @@ class AdaptationModel(Model):
                  # number of edges for BA network
                  number_of_edges = 3,
                  number_of_steps = 20,
+                 tax_rate = 1000,
+                 government_money = 3000000,
                  number_of_zones = 1,
                  base_water_level = 0, #the base of the water level
                  # number of nearest neighbours for WS social network
@@ -54,7 +56,10 @@ class AdaptationModel(Model):
         # defining the variables and setting the values
         self.number_of_households = number_of_households  # Total number of household agents
         self.seed = seed #?
+        self.government_money = government_money,
+        self.tax_rate = tax_rate
         self.number_of_steps = number_of_steps
+        self.current_policy = 'No policy'
         self.number_of_floods = 0
         self.water_level = {}
         self.number_of_zones = number_of_zones
@@ -91,22 +96,27 @@ class AdaptationModel(Model):
         media = Media(unique_id=i+1, model=self)
         self.schedule.add(media)
 
+        government = Government(unique_id=i+2, model=self, money=government_money)
+        self.schedule.add(government)
+
         # You might want to create other agents here, e.g. insurance agents.
 
         # Data collection setup to collect data
         model_metrics = {
                         "total_adapted_households": self.total_adapted_households,
                         "media_coverage": self.current_media_attention,
-                        "number_of_floods": self.get_number_of_floods
-                        # ... other reporters ...
+                        "number_of_floods": self.get_number_of_floods,
+                        "current_policy": self.get_current_policy
                         }
         
         agent_metrics = {
+                        "Type": "type",
                         "FloodDepthEstimated": "flood_depth_estimated",
                         "FloodDamageEstimated" : "flood_damage_estimated",
                         "FloodDepthActual": "flood_depth_actual",
                         "FloodDamageActual" : "flood_damage_actual",
                         "IsAdapted": "is_adapted",
+                        "Money": "money",
                         "FriendsCount": lambda a: a.count_friends(radius=1),
                         "location": "location"
                         # ... other reporters ...
@@ -183,6 +193,12 @@ class AdaptationModel(Model):
     
     def set_media_attention(self, val):
         self.media_coverage = val
+    
+    def set_current_policy(self, val):
+        self.current_policy = val
+    
+    def get_current_policy(self):
+        return self.current_policy
     
     def plot_model_domain_with_agents(self):
         fig, ax = plt.subplots()
