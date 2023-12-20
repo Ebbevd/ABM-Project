@@ -251,6 +251,15 @@ class Media(Agent):
             f = open("logs/logs.txt", "a")
             f.write(f"Step: {self.model.schedule.steps} Agent: Media ther avarage damage is {avarge_damage} and the coverage {self.coverage_types[self.coverage]}\n")
             f.close()
+    
+class Government_policy_implementation(Government):
+    def __init__(self, unique_id, model, position, type):
+        super().__init__(unique_id, model)
+        self.poistion = position
+        self.type = type
+
+    def step(self):
+        pass
 
 
 class Insurance(Agent):

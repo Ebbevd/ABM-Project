@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import random
 
 # Import the agent class(es) from agents.py
-from agents import Households, Media, Government
+from agents import Households, Media, Government,  Government_policy_implementation
 
 # Import functions from functions.py
 from functions import get_flood_map_data, calculate_basic_flood_damage, get_rain_dict
