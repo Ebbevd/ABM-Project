@@ -138,6 +138,7 @@ class Government(Agent):
         self.type = 'government'
         self.money = money
         self.policy = None
+        self.amount_of_policies = 0
     
     def list_adapted(self, agents):
         adapted = []
@@ -207,7 +208,11 @@ class Government(Agent):
         #If the flood damage is high and there are little households adaptd #check the policy every 5 steps and 
         if self.model.schedule.steps % 5 == 0:
             self.policy = self.decide_policy(households=households, adapted_households=adapted_households, money_available=self.money)
-            # Implement the policy
+            self.amount_of_policies += 1
+            # Implement the policy so add the implementation to the schedule
+            if self.policy != None:
+                implementation = Government_policy_implementation(unique_id=self.unique_id + self.amount_of_policies , model=self.model, position=self.model.heigh_locations[0], policy=self.policy)
+                self.model.schedule.add(implementation)
 
 # More agent classes can be added here, e.g. for insurance agents.
 class Media(Agent):
@@ -252,11 +257,15 @@ class Media(Agent):
             f.write(f"Step: {self.model.schedule.steps} Agent: Media ther avarage damage is {avarge_damage} and the coverage {self.coverage_types[self.coverage]}\n")
             f.close()
     
-class Government_policy_implementation(Government):
-    def __init__(self, unique_id, model, position, type):
+class Government_policy_implementation(Agent):
+    def __init__(self, unique_id, model, position, policy):
         super().__init__(unique_id, model)
-        self.poistion = position
-        self.type = type
+        self.location = position
+        self.type = "implementation"
+        self.policy = policy
+    
+    def count_friends(self, radius): #has to be here because of the lamda function in the model can change this later
+        pass
 
     def step(self):
         pass

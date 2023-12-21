@@ -4,14 +4,10 @@ from mesa import Model, Agent
 from mesa.time import RandomActivation
 from mesa.space import NetworkGrid
 from mesa.datacollection import DataCollector
-import geopandas as gpd
 import rasterio as rs
 import matplotlib.pyplot as plt
-import random
-
 # Import the agent class(es) from agents.py
-from agents import Households, Media, Government,  Government_policy_implementation
-
+from agents import Households, Media, Government
 # Import functions from functions.py
 from functions import get_flood_map_data, calculate_basic_flood_damage, get_rain_dict
 from functions import map_domain_gdf, floodplain_gdf

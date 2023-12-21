@@ -12,6 +12,7 @@ from shapely import contains_xy
 from shapely import prepare
 import geopandas as gpd
 import pandas as pd
+from scipy.signal import argrelextrema
 
 def set_initial_values(input_data, parameter, seed):
     """
