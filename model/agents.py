@@ -6,7 +6,7 @@ from shapely import contains_xy
 import numpy as np
 
 # Import functions from functions.py
-from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score, risk_score, move
+from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score, risk_score, move, get_low_locations
 from functions import floodplain_multipolygon
 
 
@@ -139,6 +139,7 @@ class Government(Agent):
         self.money = money
         self.policy = None
         self.amount_of_policies = 0
+        self.low_locations = get_low_locations(sample_size=100, corresponding_map=model.flood_map, band=model.band_flood_img, arrey_length=10)
     
     def list_adapted(self, agents):
         adapted = []
@@ -178,7 +179,6 @@ class Government(Agent):
         actual_damage = self.actual_damage(households=households)
 
         policy_number = (ratio_adapted + expected_damage + actual_damage)/3
-        print(policy_number)
 
         if 0.3 <= policy_number <= 0.6 and money_available > 1000000: #check how expencive dijks are
             policy = policies[1]
@@ -208,10 +208,10 @@ class Government(Agent):
         #If the flood damage is high and there are little households adaptd #check the policy every 5 steps and 
         if self.model.schedule.steps % 5 == 0:
             self.policy = self.decide_policy(households=households, adapted_households=adapted_households, money_available=self.money)
-            self.amount_of_policies += 1
             # Implement the policy so add the implementation to the schedule
-            if self.policy != None:
-                implementation = Government_policy_implementation(unique_id=self.unique_id + self.amount_of_policies , model=self.model, position=self.model.heigh_locations[0], policy=self.policy)
+            if self.policy != "None" and self.amount_of_policies<=10:
+                self.amount_of_policies += 1
+                implementation = Government_policy_implementation(unique_id=self.unique_id + self.amount_of_policies , model=self.model, position=self.low_locations[self.amount_of_policies], policy=self.policy)
                 self.model.schedule.add(implementation)
 
 # More agent classes can be added here, e.g. for insurance agents.

@@ -11,6 +11,7 @@ import math
 from shapely import contains_xy
 from shapely import prepare
 import geopandas as gpd
+from shapely.geometry import Point
 import pandas as pd
 from scipy.signal import argrelextrema
 
@@ -129,6 +130,30 @@ def get_flood_depth(corresponding_map, location, band):
     row = abs(row)
     depth = band[row -1, col -1]
     return depth
+
+def get_low_locations(sample_size, corresponding_map, band, arrey_length):
+    locations = {}
+    low_locations = []
+    
+    for i in range(sample_size):
+        x = random.uniform(map_minx, map_maxx)
+        y = random.uniform(map_miny, map_maxy)
+        location = Point(x,y)
+        depth = get_flood_depth(corresponding_map, location, band)
+        locations[depth] = location
+    
+    for i in range(arrey_length):
+        min_key = min(locations.keys())
+        low_location = locations[min_key]
+        low_locations.append(low_location)
+        locations.pop(min_key)
+        
+    return low_locations
+    
+    
+    
+
+
 
 def get_position_flood(bound_l, bound_r, bound_t, bound_b, img, seed):
     """ 
