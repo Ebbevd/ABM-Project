@@ -111,7 +111,7 @@ def move(x, y):
         if contains_xy(map_domain_polygon, x, y):
             return x, y
 
-def get_flood_depth(corresponding_map, location, band, implementations):
+def get_flood_depth(corresponding_map, location, band):
     """ 
     To get the flood depth of a specific location within the model domain.
     Households are placed randomly on the map, so the distribution does not follow reality.
@@ -130,14 +130,6 @@ def get_flood_depth(corresponding_map, location, band, implementations):
     row = abs(row)
     depth = band[row -1, col -1]
 
-    for i in implementations: #here we check if the agent is close to the 
-        x = i.location.x
-        y = i.location.y
-
-        dif_x = abs(location.x - x)
-        dif_y = abs(location.y - y)
-
-
     return depth
 
 def get_low_locations(sample_size, corresponding_map, band, arrey_length):
@@ -148,7 +140,7 @@ def get_low_locations(sample_size, corresponding_map, band, arrey_length):
         x = random.uniform(map_minx, map_maxx)
         y = random.uniform(map_miny, map_maxy)
         location = Point(x,y)
-        depth = get_flood_depth(corresponding_map, location, band, implementations=[])
+        depth = get_flood_depth(corresponding_map, location, band)
         locations[depth] = location
     
     for i in range(arrey_length):
@@ -159,10 +151,20 @@ def get_low_locations(sample_size, corresponding_map, band, arrey_length):
         
     return low_locations
     
-    
-    
 
+def adapted_because_of_government_implementation(implementation_agents, agent):
+    for i in implementation_agents:
+        x = i.location.x
+        y = i.location.y
 
+        diff_x = abs(agent.location.x - x)
+        diff_y = abs(agent.location.y - y)
+
+        if diff_x < 8000 and diff_y < 8000:
+            if agent not in agent.model.adapted_because_government:
+                agent.model.adapted_because_government.append(agent)
+            return True
+    return False
 
 def get_position_flood(bound_l, bound_r, bound_t, bound_b, img, seed):
     """ 

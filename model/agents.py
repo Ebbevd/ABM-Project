@@ -6,7 +6,7 @@ from shapely import contains_xy
 import numpy as np
 
 # Import functions from functions.py
-from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score, risk_score, move, get_low_locations
+from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score, risk_score, move, get_low_locations, adapted_because_of_government_implementation
 from functions import floodplain_multipolygon
 
 
@@ -41,7 +41,7 @@ class Households(Agent): #money
         # Get the estimated flood depth at those coordinates. 
         # the estimated flood depth is calculated based on the flood map (i.e., past data) so this is not the actual flood depth
         # Flood depth can be negative if the location is at a high elevation
-        self.flood_depth_estimated = get_flood_depth(corresponding_map=model.flood_map, location=self.location, band=model.band_flood_img, implementations=model.implementation_agents)
+        self.flood_depth_estimated = get_flood_depth(corresponding_map=model.flood_map, location=self.location, band=model.band_flood_img)
         # handle negative values of flood depth
         if self.flood_depth_estimated < 0:
             self.flood_depth_estimated = 0
@@ -101,7 +101,7 @@ class Households(Agent): #money
         Now we can use the municipality to create better this process 
         """
     
-        self.flood_depth_estimated = get_flood_depth(corresponding_map=self.model.flood_map, location=self.location, band=self.model.band_flood_img, implementations=self.model.implementation_agents)
+        self.flood_depth_estimated = get_flood_depth(corresponding_map=self.model.flood_map, location=self.location, band=self.model.band_flood_img)
         if self.flood_depth_estimated < 0:
             self.flood_depth_estimated = 0
         
@@ -117,7 +117,10 @@ class Households(Agent): #money
         friends_adapted = self.count_friends_adapted(radius=1)
         prospect_score = prospect_theory_score(friends_adapted=friends_adapted, risk_behavior=self.risk_behavior, number_of_households=self.model.number_of_households, media_coverage=self.model.media_coverage, flood_damage_estimated= self.flood_damage_estimated)
 
-        if self.decide_if_adapted(prospect_score) and self.moved == False: #takes two more from self.
+        #here we should say that if a household is close to a government implementation they are automatically adapted and nothing else realy matters past that point 
+        if adapted_because_of_government_implementation(implementation_agents=self.model.implementation_agents, agent=self):
+            self.is_adapted = True
+        elif self.decide_if_adapted(prospect_score) and self.moved == False: #takes two more from self.
             self.is_adapted = True  # Agent adapts to flooding so it moves to a higher area  
             self.step_adapted = self.model.schedule.steps
             if self.model.heigh_locations:

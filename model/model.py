@@ -34,6 +34,7 @@ class AdaptationModel(Model):
                  network = 'watts_strogatz',
                  # likeliness of edge being created between two nodes
                  probability_of_network_connection = 0.4,
+                 
                  # number of edges for BA network
                  number_of_edges = 3,
                  number_of_steps = 20,
@@ -52,7 +53,8 @@ class AdaptationModel(Model):
         # defining the variables and setting the values
         self.number_of_households = number_of_households  # Total number of household agents
         self.seed = seed #?
-        self.government_money = government_money,
+        self.government_money = government_money
+        self.adapted_because_government = []
         self.tax_rate = tax_rate
         self.number_of_steps = number_of_steps
         self.current_policy = 'No policy'
@@ -103,7 +105,8 @@ class AdaptationModel(Model):
                         "total_adapted_households": self.total_adapted_households,
                         "media_coverage": self.current_media_attention,
                         "number_of_floods": self.get_number_of_floods,
-                        "current_policy": self.get_current_policy
+                        "current_policy": self.get_current_policy,
+                        "AdaptedByGovernmentImplementation": self.adapted_because_government_measures,
                         }
         
         agent_metrics = {
@@ -187,6 +190,9 @@ class AdaptationModel(Model):
     
     def get_number_of_floods(self):
         return self.number_of_floods
+    
+    def adapted_because_government_measures(self):
+        return self.adapted_because_government
     
     def set_media_attention(self, val):
         self.media_coverage = val
