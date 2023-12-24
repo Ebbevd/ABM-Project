@@ -61,6 +61,7 @@ class AdaptationModel(Model):
         self.number_of_zones = number_of_zones
         self.rain_values = {}
         self.heigh_locations = []
+        self.implementation_agents = []
         self.base_water_level = base_water_level
         self.max_damage_dol_per_sqm = max_damage_dol_per_sqm
         self.media_coverage = media_coverage

@@ -111,7 +111,7 @@ def move(x, y):
         if contains_xy(map_domain_polygon, x, y):
             return x, y
 
-def get_flood_depth(corresponding_map, location, band):
+def get_flood_depth(corresponding_map, location, band, implementations):
     """ 
     To get the flood depth of a specific location within the model domain.
     Households are placed randomly on the map, so the distribution does not follow reality.
@@ -129,6 +129,15 @@ def get_flood_depth(corresponding_map, location, band):
     row, col = corresponding_map.index(location.x, location.y)
     row = abs(row)
     depth = band[row -1, col -1]
+
+    for i in implementations: #here we check if the agent is close to the 
+        x = i.location.x
+        y = i.location.y
+
+        dif_x = abs(location.x - x)
+        dif_y = abs(location.y - y)
+
+
     return depth
 
 def get_low_locations(sample_size, corresponding_map, band, arrey_length):
@@ -139,7 +148,7 @@ def get_low_locations(sample_size, corresponding_map, band, arrey_length):
         x = random.uniform(map_minx, map_maxx)
         y = random.uniform(map_miny, map_maxy)
         location = Point(x,y)
-        depth = get_flood_depth(corresponding_map, location, band)
+        depth = get_flood_depth(corresponding_map, location, band, implementations=[])
         locations[depth] = location
     
     for i in range(arrey_length):

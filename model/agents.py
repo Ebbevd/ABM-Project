@@ -41,7 +41,7 @@ class Households(Agent): #money
         # Get the estimated flood depth at those coordinates. 
         # the estimated flood depth is calculated based on the flood map (i.e., past data) so this is not the actual flood depth
         # Flood depth can be negative if the location is at a high elevation
-        self.flood_depth_estimated = get_flood_depth(corresponding_map=model.flood_map, location=self.location, band=model.band_flood_img)
+        self.flood_depth_estimated = get_flood_depth(corresponding_map=model.flood_map, location=self.location, band=model.band_flood_img, implementations=model.implementation_agents)
         # handle negative values of flood depth
         if self.flood_depth_estimated < 0:
             self.flood_depth_estimated = 0
@@ -100,6 +100,15 @@ class Households(Agent): #money
         
         Now we can use the municipality to create better this process 
         """
+    
+        self.flood_depth_estimated = get_flood_depth(corresponding_map=self.model.flood_map, location=self.location, band=self.model.band_flood_img, implementations=self.model.implementation_agents)
+        if self.flood_depth_estimated < 0:
+            self.flood_depth_estimated = 0
+        
+        # calculate the estimated flood damage given the estimated flood depth. Flood damage is a factor between 0 and 1
+        self.flood_damage_estimated = calculate_basic_flood_damage(flood_depth=self.flood_depth_estimated)
+        self.flood_damage_actual = calculate_basic_flood_damage(flood_depth=self.flood_depth_actual)
+
         self.pay_taxes() #first pay tax
         self.earn_money() #than earn money
         if self.flood_depth_estimated < 0.025:
@@ -212,6 +221,7 @@ class Government(Agent):
             if self.policy != "None" and self.amount_of_policies<=10:
                 self.amount_of_policies += 1
                 implementation = Government_policy_implementation(unique_id=self.unique_id + self.amount_of_policies , model=self.model, position=self.low_locations[self.amount_of_policies], policy=self.policy)
+                self.model.implementation_agents.append(implementation)
                 self.model.schedule.add(implementation)
 
 # More agent classes can be added here, e.g. for insurance agents.
