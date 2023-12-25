@@ -7,7 +7,7 @@ from mesa.datacollection import DataCollector
 import rasterio as rs
 import matplotlib.pyplot as plt
 # Import the agent class(es) from agents.py
-from agents import Households, Media, Government
+from agents import Households, Media, Government, Insurance
 # Import functions from functions.py
 from functions import get_flood_map_data, calculate_basic_flood_damage, get_rain_dict
 from functions import map_domain_gdf, floodplain_gdf
@@ -40,6 +40,7 @@ class AdaptationModel(Model):
                  number_of_steps = 20,
                  tax_rate = 1000,
                  government_money = 3000000,
+                 insurance_money = 1000000,
                  number_of_zones = 1,
                  base_water_level = 0, #the base of the water level
                  # number of nearest neighbours for WS social network
@@ -54,6 +55,7 @@ class AdaptationModel(Model):
         self.number_of_households = number_of_households  # Total number of household agents
         self.seed = seed #?
         self.government_money = government_money
+        self.insurance_money = insurance_money
         self.adapted_because_government = []
         self.tax_rate = tax_rate
         self.number_of_steps = number_of_steps
@@ -98,6 +100,9 @@ class AdaptationModel(Model):
         government = Government(unique_id=i+2, model=self, money=government_money)
         self.schedule.add(government)
 
+        insurance = Insurance(unique_id=i+3, model=self, money=insurance_money)
+        self.schedule.add(insurance)
+
         # You might want to create other agents here, e.g. insurance agents.
 
         # Data collection setup to collect data
@@ -117,6 +122,7 @@ class AdaptationModel(Model):
                         "FloodDamageActual" : "flood_damage_actual",
                         "IsAdapted": "is_adapted",
                         "Money": "money",
+                        "IsInsured": "is_insured",
                         "FriendsCount": lambda a: a.count_friends(radius=1),
                         "location": "location"
                         # ... other reporters ...
@@ -251,10 +257,11 @@ class AdaptationModel(Model):
         for i in rain_dict_keys:
             rain_value = self.rain_values[i] #this is a list
             rain_value = rain_value[self.schedule.steps]
-            if self.decide_if_flood(float(rain_value)):
-                self.number_of_floods += 1
-                water_level = self.base_water_level + float(rain_value) #this should be based on the location of the agent
-                self.water_level[i] = water_level
+            if self.schedule.steps != 0: #don't flood at the start of the model run
+                if self.decide_if_flood(float(rain_value)):
+                    self.number_of_floods += 1
+                    water_level = self.base_water_level + float(rain_value) #this should be based on the location of the agent
+                    self.water_level[i] = water_level
                 
         for agent in self.schedule.agents:
             if agent.type == 'household':

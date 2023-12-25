@@ -11,9 +11,8 @@ New:
 - Agents can not be adapted if there is still a risk, you can see they unadapt and adapt again a lot. We should change this with a governing body
 ______________________________________________________________________________________________________________
 To do:
-- Show policy on the map
-- Set location for policy to a deep location that was floded
-- Make the flood depth less for households in proximity of a dijk
 - Improve the economy model
+- agents don't yet pay for their insurance 
+- let's also add an element of the simple economy where they steel some money from each other 
 - intorduce insurance 
 - improve data analysis

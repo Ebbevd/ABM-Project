@@ -25,6 +25,9 @@ class Households(Agent): #money
         self.type = "household"
         self.adaptation_threshold = adaptation_threshold 
         self.moved = False
+        self.money_lost_because_of_flood_adaption = 0
+        self.insurance_agent = None
+        self.is_insured = False
         self.money = random.randint(1000,10000)
         self.step_adapted = 0
         self.adaptation_number = 0
@@ -37,6 +40,10 @@ class Households(Agent): #money
         self.in_floodplain = False
         if contains_xy(geom=floodplain_multipolygon, x=self.location.x, y=self.location.y):
             self.in_floodplain = True
+        
+        for agent in self.model.schedule.agents:
+                if agent.type == "insurance":
+                    self.insurance_agent = agent
 
         # Get the estimated flood depth at those coordinates. 
         # the estimated flood depth is calculated based on the flood map (i.e., past data) so this is not the actual flood depth
@@ -86,9 +93,31 @@ class Households(Agent): #money
                 self.money -= self.model.tax_rate 
                 agent.money += self.model.tax_rate
     
+    def pay_insurance_risk_based(self, insurance_agent):
+        pass
+    
     def earn_money(self):
         self.money += random.randint(500, 3000)
 
+    def decide_on_insurance(self):
+        estimated_flood_damage = self.flood_damage_estimated
+        neigbors = self.model.grid.get_neighbors(self.pos) #prospect theory aspect
+        neigbors_insured = 0
+        social_score = 0
+
+        for i in neigbors:
+            if i.is_insured:
+                neigbors_insured += 1
+        
+        if neigbors_insured != 0:
+            social_score = neigbors_insured/len(neigbors)
+        
+        if social_score > 0.5:
+            return True
+        elif estimated_flood_damage > 0.5:
+            return True
+        
+        return False
 
     def step(self):
         # Logic for adaptation based on estimated flood damage and a random chance.
@@ -111,8 +140,15 @@ class Households(Agent): #money
 
         self.pay_taxes() #first pay tax
         self.earn_money() #than earn money
+        if self.model.schedule.steps %5 == 0 or self.model.schedule.steps == 0: #decide if agent wants insurance
+            self.decide_on_insurance() #decide if the agent wants an insurance
         if self.flood_depth_estimated < 0.025:
             self.model.heigh_locations.append(self.location)
+        
+        #Pay for insurance each step
+        if self.is_insured:
+            print("pay insurance")
+            self.pay_insurance_risk_based(self.insurance_agent)
         
         friends_adapted = self.count_friends_adapted(radius=1)
         prospect_score = prospect_theory_score(friends_adapted=friends_adapted, risk_behavior=self.risk_behavior, number_of_households=self.model.number_of_households, media_coverage=self.model.media_coverage, flood_damage_estimated= self.flood_damage_estimated)
@@ -121,13 +157,19 @@ class Households(Agent): #money
         if adapted_because_of_government_implementation(implementation_agents=self.model.implementation_agents, agent=self):
             self.is_adapted = True
         elif self.decide_if_adapted(prospect_score) and self.moved == False: #takes two more from self.
-            self.is_adapted = True  # Agent adapts to flooding so it moves to a higher area  
+            self.is_adapted = True  # Agent adapts to flooding so it moves to a higher area  Maybe only move if that is tha last resort
             self.step_adapted = self.model.schedule.steps
             if self.model.heigh_locations:
                 location = self.model.heigh_locations[random.randint(0, len(self.model.heigh_locations)-1)]
                 x = location.x
                 y= location.y 
-                x,y = move(x,y)
+                x,y = move(x,y) #move to a new location that is higher and close to other high living neighborhoods
+                cost_of_moving = random.randint(1000,5000) 
+                if cost_of_moving <= self.money:
+                    self.money -= cost_of_moving#if they move it will cost between 1000 and 5000
+                    self.money_lost_because_of_flood_adaption += cost_of_moving
+                else:
+                    self.money = 0
                 self.location = Point(x, y)
             else:
                 x, y = generate_random_location_within_map_domain() #agent moves to a different spot where he is adapted, idealy this would be to a higher location but I don't know how to do this
@@ -223,7 +265,7 @@ class Government(Agent):
             # Implement the policy so add the implementation to the schedule
             if self.policy != "None" and self.amount_of_policies<=10:
                 self.amount_of_policies += 1
-                implementation = Government_policy_implementation(unique_id=self.unique_id + self.amount_of_policies , model=self.model, position=self.low_locations[self.amount_of_policies], policy=self.policy)
+                implementation = Government_policy_implementation(unique_id=self.unique_id+1 + self.amount_of_policies , model=self.model, position=self.low_locations[self.amount_of_policies], policy=self.policy)
                 self.model.implementation_agents.append(implementation)
                 self.model.schedule.add(implementation)
 
@@ -285,8 +327,16 @@ class Government_policy_implementation(Agent):
 
 
 class Insurance(Agent):
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, model, money):
         super().__init__(unique_id, model)
+        self.type = 'insurance'
+        self.bank_funds = money
+
+    def pay_agents(self, agent):
+        pass
+
+    def count_friends(self, radius): #has to be here because of the lamda function in the model can change this later
+        pass
 
     def step(self):
         pass
