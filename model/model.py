@@ -34,7 +34,7 @@ class AdaptationModel(Model):
                  network = 'watts_strogatz',
                  # likeliness of edge being created between two nodes
                  probability_of_network_connection = 0.4,
-                 
+                 introduce_inequality = False,
                  # number of edges for BA network
                  number_of_edges = 3,
                  number_of_steps = 20,
@@ -57,6 +57,7 @@ class AdaptationModel(Model):
         self.government_money = government_money
         self.insurance_money = insurance_money
         self.adapted_because_government = []
+        self.introduce_inequality = introduce_inequality
         self.tax_rate = tax_rate
         self.number_of_steps = number_of_steps
         self.current_policy = 'No policy'
@@ -70,6 +71,7 @@ class AdaptationModel(Model):
         self.max_damage_dol_per_sqm = max_damage_dol_per_sqm
         self.media_coverage = media_coverage
         self.adaptation_threshold = adaptation_threshold
+        self.insurance_agent = None
         # network
         self.network = network # Type of network to be created
         self.probability_of_network_connection = probability_of_network_connection
@@ -232,8 +234,26 @@ class AdaptationModel(Model):
         plt.ylabel('Latitude')
         plt.show()
     
-    def decide_if_flood(self, rain_value):
-        if rain_value > 0.3:
+    def decide_if_flood(self, rain_dict_key, government_implemetaitons): #rain dict key should be two x coordinate bounds
+        rain_value = self.rain_values[rain_dict_key] #this is a list
+        rain_value = rain_value[self.schedule.steps]
+
+        rain_dict_key_avarage = (rain_dict_key[0] + rain_dict_key[1])/2
+
+        for i in government_implemetaitons: #no flood in this zone because close to implementation
+            if i.policy == "Dijks":
+                diff_location = abs(rain_dict_key_avarage - i.location.x)
+                if diff_location < 100000: #
+                    f = open("logs/logs.txt", "a")
+                    f.write(f"no flood in zone {rain_dict_key} because of implementation\n")
+                    f.close()
+                    return False
+            elif i.policy == "Water Locks":
+                if diff_location < 150000: #
+                    return False
+
+        if float(rain_value) > 0.3:
+            print(f"Flood in zone {rain_dict_key}")
             return True
         else:
             return False
@@ -258,7 +278,7 @@ class AdaptationModel(Model):
             rain_value = self.rain_values[i] #this is a list
             rain_value = rain_value[self.schedule.steps]
             if self.schedule.steps != 0: #don't flood at the start of the model run
-                if self.decide_if_flood(float(rain_value)):
+                if self.decide_if_flood(rain_dict_key=i,government_implemetaitons=self.implementation_agents): #this flood will later be in one of the zones that will later be determined by the agent
                     self.number_of_floods += 1
                     water_level = self.base_water_level + float(rain_value) #this should be based on the location of the agent
                     self.water_level[i] = water_level

@@ -166,7 +166,7 @@ def adapted_because_of_government_implementation(implementation_agents, agent):
                     agent.model.adapted_because_government.append(agent)
                 return True
         elif i.policy == "Water locks": #water locks offer double the protection
-             if diff_x < 1600 and diff_y < 1600:
+             if diff_x < 16000 and diff_y < 16000:
                 if agent not in agent.model.adapted_because_government:
                     agent.model.adapted_because_government.append(agent)
                 return True

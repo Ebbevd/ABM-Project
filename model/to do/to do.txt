@@ -11,8 +11,6 @@ New:
 - Agents can not be adapted if there is still a risk, you can see they unadapt and adapt again a lot. We should change this with a governing body
 ______________________________________________________________________________________________________________
 To do:
-- Improve the economy model
-- agents don't yet pay for their insurance 
-- let's also add an element of the simple economy where they steel some money from each other 
-- intorduce insurance 
+- agents can move as a drastic measure but they could also take different measures
+- government implementations do not have impact on the number of floods
 - improve data analysis
