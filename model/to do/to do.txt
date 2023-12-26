@@ -12,5 +12,6 @@ New:
 ______________________________________________________________________________________________________________
 To do:
 - agents can move as a drastic measure but they could also take different measures
-- government implementations do not have impact on the number of floods
+- Make tax rates not fixed
+- what if household cannot pay insurance
 - improve data analysis

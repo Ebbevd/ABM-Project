@@ -26,6 +26,7 @@ class AdaptationModel(Model):
                  # flood damage related: from Huizinga, de Moel --> damage factor
                  # in dollar and adjusted for inflation to 2020 value
                  max_damage_dol_per_sqm = 1216.65,
+                 insurance_price = 200,
                  # Simplified argument for choosing flood map. Can currently be "harvey", "100yr", or "500yr".
                  flood_map_choice='harvey',
                  # ### network related parameters ###
@@ -55,6 +56,7 @@ class AdaptationModel(Model):
         self.number_of_households = number_of_households  # Total number of household agents
         self.seed = seed #?
         self.government_money = government_money
+        self.insurance_price = insurance_price
         self.insurance_money = insurance_money
         self.adapted_because_government = []
         self.introduce_inequality = introduce_inequality
@@ -92,7 +94,7 @@ class AdaptationModel(Model):
 
         # create households through initiating a household on each node of the network graph
         for i, node in enumerate(self.G.nodes()):
-            household = Households(unique_id=i, model=self, adaptation_threshold=self.adaptation_threshold)
+            household = Households(unique_id=i, model=self, adaptation_threshold=self.adaptation_threshold, insurance_price=insurance_price)
             self.schedule.add(household)
             self.grid.place_agent(agent=household, node_id=node)
         
@@ -237,7 +239,7 @@ class AdaptationModel(Model):
     def decide_if_flood(self, rain_dict_key, government_implemetaitons): #rain dict key should be two x coordinate bounds
         rain_value = self.rain_values[rain_dict_key] #this is a list
         rain_value = rain_value[self.schedule.steps]
-
+        #print(self.rain_values)
         rain_dict_key_avarage = (rain_dict_key[0] + rain_dict_key[1])/2
 
         for i in government_implemetaitons: #no flood in this zone because close to implementation
@@ -252,7 +254,7 @@ class AdaptationModel(Model):
                 if diff_location < 150000: #
                     return False
 
-        if float(rain_value) > 0.3:
+        if float(rain_value) > 0.3: #30 mm/hour
             print(f"Flood in zone {rain_dict_key}")
             return True
         else:

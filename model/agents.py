@@ -18,13 +18,14 @@ class Households(Agent): #money
     In a real scenario, this would be based on actual geographical data or more complex logic.
     """
 
-    def __init__(self, unique_id, model, adaptation_threshold):
+    def __init__(self, unique_id, model, adaptation_threshold, insurance_price):
         super().__init__(unique_id, model)
         self.is_adapted = False  # Initial adaptation status set to False
         self.risk_behavior = risk_score() #this would be nice as a normal curve
         self.type = "household"
         self.adaptation_threshold = adaptation_threshold 
         self.moved = False
+        self.insurance_price = insurance_price
         self.money_lost_because_of_flood_adaption = 0
         self.is_insured = False
         self.money = random.randint(1000,10000)
@@ -92,7 +93,6 @@ class Households(Agent): #money
                 if self.money > other_agent_score:
                     self.money -= other_agent_score
         
-
     def decide_if_adapted(self, prospect_score):
         if self.model.schedule.steps % 10 == 0: #give an update every 10 steps
             f = open("logs/logs.txt", "a")
@@ -109,8 +109,13 @@ class Households(Agent): #money
                 agent.money += self.model.tax_rate
     
     def pay_insurance_risk_based(self, insurance_agent):
-        pass
-    
+        final_amount = self.risk_behavior * self.insurance_price
+        if (self.money/2) >= final_amount: #assume agents do not want to pay insurance if that consts more than half their bank account
+            self.money -= final_amount
+            insurance_agent.bank_funds += final_amount
+        else:
+            self.is_insured = False
+
     def earn_money(self):
         self.money += random.randint(500, 3000)
 
@@ -123,11 +128,13 @@ class Households(Agent): #money
         for i in neigbors:
             if i.is_insured:
                 neigbors_insured += 1
+
         if neigbors_insured != 0:
             social_score = neigbors_insured/len(neigbors)
+
         if social_score > 0.5:
             return True
-        elif estimated_flood_damage > 0.5:
+        elif estimated_flood_damage > 0.5: 
             return True
         return False
 
@@ -152,7 +159,7 @@ class Households(Agent): #money
 
         self.pay_taxes() #first pay tax
         self.earn_money() #than earn money
-        if self.model.schedule.steps %5 == 0 or self.model.schedule.steps == 0: #decide if agent wants insurance
+        if self.model.schedule.steps %5 == 0 or self.model.schedule.steps == 0 and self.is_adapted == False: #decide if agent wants insurance do not get insurance if already adapted
             self.is_insured = self.decide_on_insurance() #decide if the agent wants an insurance
             if self.model.introduce_inequality:
                 self.take_money() #inspired by simple economy agents can also take money from other agents
@@ -248,15 +255,14 @@ class Government(Agent):
         actual_damage = self.actual_damage(households=households)
 
         policy_number = (ratio_adapted + expected_damage + actual_damage)/3
-
-        if 0.3 <= policy_number <= 0.6 and money_available > 1000000: #check how expencive dijks are
+        if 0.4 <= policy_number <= 0.5 and money_available > 1000000: #check how expencive dijks are
             policy = policies[1]
             self.model.set_current_policy(policy)
             self.money -= 1000000
-        if policy_number >= 0.6 and money_available > 5000000:
+        if policy_number >= 0.5 and money_available > 3000000: #this is rare but possible
             policy = policies[2]
             self.model.set_current_policy(policy)
-            self.money -= 5000000
+            self.money -= 3000000
         return policy
 
     def spend_on_other_expences(self):
@@ -265,7 +271,10 @@ class Government(Agent):
             self.money -= expence
         else:
             self.money = 0
-        
+    
+    def generate_other_incomes(self):
+        incomes = random.randint(10000, 100000)
+        self.money += incomes
 
     def step(self):
         agents = self.model.schedule.agents
@@ -273,6 +282,7 @@ class Government(Agent):
         adapted_households = self.list_adapted(households)
         #amount_adapted = len(adapted_households) #amount of households already adapted 
         self.spend_on_other_expences() #need to spend money on other things as well
+        self.generate_other_incomes() #things like business taxes and among other things
         
         #If the flood damage is high and there are little households adaptd #check the policy every 5 steps and 
         if self.model.schedule.steps % 5 == 0:
@@ -346,10 +356,15 @@ class Insurance(Agent):
         super().__init__(unique_id, model)
         self.type = 'insurance'
         self.bank_funds = money
+        self.bankrupt = False
         self.model.insurance_agent = self
 
     def pay_agents(self, agent, cost_of_moving):
         agent.money += cost_of_moving
+        if self.bank_funds >= cost_of_moving:
+            self.bank_funds -= cost_of_moving
+        else:
+            self.bankrupt = True
 
     def count_friends(self, radius): #has to be here because of the lamda function in the model can change this later
         pass
