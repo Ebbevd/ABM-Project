@@ -194,7 +194,7 @@ def get_position_flood(bound_l, bound_r, bound_t, bound_b, img, seed):
     row, col = img.index(x, y)
     return x, y, row, col
 
-def calculate_basic_flood_damage(flood_depth): 
+def calculate_basic_flood_damage(self, flood_depth): 
     """
     To get flood damage based on flood depth of household
     from de Moer, Huizinga (2017) with logarithmic regression over it.
@@ -208,6 +208,7 @@ def calculate_basic_flood_damage(flood_depth):
     -------
     flood_damage : damage factor between 0 and 1
     """
+    
     if flood_depth >= 6:
         flood_damage = 1
     elif flood_depth < 0.025:
@@ -215,8 +216,10 @@ def calculate_basic_flood_damage(flood_depth):
     else:
         # see flood_damage.xlsx for function generation
         flood_damage = 0.1746 * math.log(flood_depth) + 0.6483
+    
+    if self.current_adoptation != "None": #this is only the case if already adapted in the past
+        flood_damage = flood_damage/(self.adaptation_posibilites.index(self.current_adoptation))
     return flood_damage
-
 def prospect_theory_score(friends_adapted, risk_behavior, number_of_households, media_coverage, flood_damage_estimated):
     #score between 1 and 0
     #agent looks at the problem subjectively so if they have allready experianced a flood or if there is media interaction they will behave diffently

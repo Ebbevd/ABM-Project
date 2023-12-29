@@ -39,8 +39,7 @@ class AdaptationModel(Model):
                  # number of edges for BA network
                  number_of_edges = 3,
                  number_of_steps = 20,
-                 tax_rate = 1000,
-                 government_money = 3000000,
+                 government_money = 5000000,
                  insurance_money = 1000000,
                  number_of_zones = 1,
                  base_water_level = 0, #the base of the water level
@@ -60,7 +59,6 @@ class AdaptationModel(Model):
         self.insurance_money = insurance_money
         self.adapted_because_government = []
         self.introduce_inequality = introduce_inequality
-        self.tax_rate = tax_rate
         self.number_of_steps = number_of_steps
         self.current_policy = 'No policy'
         self.number_of_floods = 0
@@ -125,6 +123,7 @@ class AdaptationModel(Model):
                         "FloodDepthActual": "flood_depth_actual",
                         "FloodDamageActual" : "flood_damage_actual",
                         "IsAdapted": "is_adapted",
+                        "CurrentAdoptation": "current_adoptation",
                         "Money": "money",
                         "IsInsured": "is_insured",
                         "FriendsCount": lambda a: a.count_friends(radius=1),
@@ -292,7 +291,7 @@ class AdaptationModel(Model):
                     if i[0] <= agent.location.x <= i[1]:
                         agent.flood_depth_actual = self.water_level[i] + agent.flood_depth_estimated #floodingdepth is random
                         # calculate the actual flood damage given the actual flood depth
-                        agent.flood_damage_actual = calculate_basic_flood_damage(agent.flood_depth_actual)
+                        agent.flood_damage_actual = calculate_basic_flood_damage(agent, agent.flood_depth_actual)
                 
         # Collect data and advance the model by one step
         self.datacollector.collect(self)
