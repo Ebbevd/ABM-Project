@@ -253,6 +253,12 @@ def risk_score():
     #print(np.average(risk))
     return risk_pick
 
+def income_normal(mean):
+    income = np.random.normal(15000, 5000, 1000)
+    income_pos = income[income>=0]
+    
+    return income_pos[np.random.randint(0, len(income_pos))]
+
 
 def get_rain_list(steps):
     df = pd.read_csv(r'../input_data/Delft_rain_data.csv', skiprows=27, on_bad_lines='skip', delimiter=",")

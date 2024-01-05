@@ -39,7 +39,8 @@ class AdaptationModel(Model):
                  # number of edges for BA network
                  number_of_edges = 3,
                  number_of_steps = 20,
-                 government_money = 5000000,
+                 household_income_mean = 15000,
+                 government_money = 10000000,
                  insurance_money = 1000000,
                  number_of_zones = 1,
                  base_water_level = 0, #the base of the water level
@@ -57,6 +58,7 @@ class AdaptationModel(Model):
         self.government_money = government_money
         self.insurance_price = insurance_price
         self.insurance_money = insurance_money
+        self.household_income_mean = household_income_mean
         self.adapted_because_government = []
         self.introduce_inequality = introduce_inequality
         self.number_of_steps = number_of_steps
@@ -92,7 +94,7 @@ class AdaptationModel(Model):
 
         # create households through initiating a household on each node of the network graph
         for i, node in enumerate(self.G.nodes()):
-            household = Households(unique_id=i, model=self, adaptation_threshold=self.adaptation_threshold, insurance_price=insurance_price)
+            household = Households(unique_id=i, model=self, adaptation_threshold=self.adaptation_threshold, income_mean=self.household_income_mean, insurance_price=insurance_price)
             self.schedule.add(household)
             self.grid.place_agent(agent=household, node_id=node)
         
@@ -262,7 +264,7 @@ class AdaptationModel(Model):
     def step(self):
         """
         introducing a shock: 
-        at time step 5, there will be a global flooding.
+        The floods are based on rain from a CSV file.
         This will result in actual flood depth. Here, we assume it is a random number
         between 0.5 and 1.2 of the estimated flood depth. In your model, you can replace this
         with a more sound procedure (e.g., you can devide the floop map into zones and 

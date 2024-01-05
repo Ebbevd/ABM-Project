@@ -6,7 +6,7 @@ from shapely import contains_xy
 import numpy as np
 
 # Import functions from functions.py
-from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score, risk_score, move, get_low_locations, adapted_because_of_government_implementation
+from functions import generate_random_location_within_map_domain, get_flood_depth, calculate_basic_flood_damage, prospect_theory_score, risk_score, move, get_low_locations, adapted_because_of_government_implementation, income_normal
 from functions import floodplain_multipolygon
 
 
@@ -18,7 +18,7 @@ class Households(Agent): #money
     In a real scenario, this would be based on actual geographical data or more complex logic.
     """
 
-    def __init__(self, unique_id, model, adaptation_threshold, insurance_price):
+    def __init__(self, unique_id, model, adaptation_threshold, income_mean, insurance_price):
         super().__init__(unique_id, model)
         self.is_adapted = False  # Initial adaptation status set to False
         self.risk_behavior = risk_score() #this would be nice as a normal curve
@@ -28,7 +28,8 @@ class Households(Agent): #money
         self.insurance_price = insurance_price
         self.money_lost_because_of_flood_adaption = 0
         self.is_insured = False
-        self.money = random.randint(1000,10000)
+        self.income_mean = income_mean
+        self.money = income_normal(46000)
         self.current_adoptation = "None"
         self.step_adapted = 0
         self.adaptation_posibilites = ["None", "SandBags", "IntenseBarricading", "Move", "GovernmentBased"]
@@ -37,7 +38,7 @@ class Households(Agent): #money
         # Get a random location on the map
         loc_x, loc_y = generate_random_location_within_map_domain()
         self.location = Point(loc_x, loc_y)
-        self.income = random.randint(500, 50000) #should be normal curve
+        self.income = income_normal(self.income_mean)
 
         # Check whether the location is within floodplain
         self.in_floodplain = False
@@ -82,8 +83,8 @@ class Households(Agent): #money
         if other_agent != self and other_agent.type == "household":
             chance_self = random.random()
             chance_i = random.random()
-            current_agent_score = (self.money * chance_self)/5
-            other_agent_score = (other_agent.money * chance_i)/5
+            current_agent_score = (self.money * chance_self)/3
+            other_agent_score = (other_agent.money * chance_i)/3
 
             if current_agent_score > other_agent_score:
                 self.money += other_agent_score
@@ -248,12 +249,12 @@ class Government(Agent):
         self.amount_of_policies = 0
         self.tax_rates = {
             0: 0,
-            2000: 0,
-            5000: 0.05,
-            10000: 0.1,
-            50000: 0.2
+            2000: 0.1,
+            5000: 0.15,
+            10000: 0.2,
+            50000: 0.25
         }
-        self.low_locations = get_low_locations(sample_size=100, corresponding_map=model.flood_map, band=model.band_flood_img, arrey_length=10)
+        self.low_locations = get_low_locations(sample_size=100, corresponding_map=model.flood_map, band=model.band_flood_img, arrey_length=20)
     
     def list_adapted(self, agents):
         adapted = []
@@ -293,25 +294,25 @@ class Government(Agent):
         actual_damage = self.actual_damage(households=households)
 
         policy_number = (ratio_adapted + expected_damage + actual_damage)/3
-        if 0.3 <= policy_number <= 0.4 and money_available > 1000000: #check how expencive dijks are
+        if 0.4 <= policy_number <= 0.5 and money_available > 1000000: #check how expencive dijks are
             policy = policies[1]
             self.model.set_current_policy(policy)
             self.money -= 1000000
-        if policy_number >= 0.4 and money_available > 3000000: #this is rare but possible
+        if policy_number >= 0.5 and money_available > 3000000: #this is rare but possible
             policy = policies[2]
             self.model.set_current_policy(policy)
             self.money -= 3000000
         return policy
 
     def spend_on_other_expences(self):
-        expence = random.randint(2000, 50000) * self.model.number_of_households
+        expence = random.randint(17000, 20000) * self.model.number_of_households
         if self.money >= expence:
             self.money -= expence
         else:
             self.money = 0
     
     def generate_other_incomes(self):
-        incomes = random.randint(10000, 100000) 
+        incomes = random.randint(150000, 400000) 
         self.money += incomes
 
     def step(self):
