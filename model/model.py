@@ -254,7 +254,7 @@ class AdaptationModel(Model):
                     return False
 
         if float(rain_value) > 0.3: #30 mm/hour
-            print(f"Flood in zone {rain_dict_key}")
+            print(f"Flood in zone {rain_dict_key}", end='\r')
             return True
         else:
             return False
