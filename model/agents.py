@@ -112,14 +112,18 @@ class Households(Agent): #money
                 personal_rate = [(income, tax) for income, tax in tax_rate.items() if income <= self.income]
                 personal_rate = personal_rate[-1] #last item should be the tax rate that applies
                 money_owed = personal_rate[1] * self.money #grab the tax and multply by money
-                self.money -= money_owed
-                agent.money += money_owed
+                if self.money - money_owed != 0:
+                    self.money -= money_owed
+                    agent.money += money_owed
+                else:
+                    agent.money += self.money
+                    self.money = 0 
     
     def pay_insurance_risk_based(self, insurance_agent):
         final_amount = self.risk_behavior * self.insurance_price
         if (self.money/2) >= final_amount: #assume agents do not want to pay insurance if that consts more than half their bank account
             self.money -= final_amount
-            insurance_agent.bank_funds += final_amount
+            insurance_agent.money += final_amount
         else:
             self.is_insured = False
 
@@ -389,14 +393,14 @@ class Insurance(Agent):
     def __init__(self, unique_id, model, money):
         super().__init__(unique_id, model)
         self.type = 'insurance'
-        self.bank_funds = money
+        self.money = money
         self.bankrupt = False
         self.model.insurance_agent = self
 
     def pay_agents(self, agent, cost_of_moving):
         agent.money += cost_of_moving
-        if self.bank_funds >= cost_of_moving:
-            self.bank_funds -= cost_of_moving
+        if self.money >= cost_of_moving:
+            self.money -= cost_of_moving
         else:
             self.bankrupt = True
 
