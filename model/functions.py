@@ -160,7 +160,7 @@ def adapted_because_of_government_implementation(implementation_agents, agent):
         diff_x = abs(agent.location.x - x)
         diff_y = abs(agent.location.y - y)
 
-        if i.policy == "Dijks":
+        if i.policy == "Dikes":
             if diff_x < 8000 and diff_y < 8000:
                 if agent not in agent.model.adapted_because_government:
                     agent.model.adapted_because_government.append(agent)
@@ -217,15 +217,15 @@ def calculate_basic_flood_damage(self, flood_depth):
         # see flood_damage.xlsx for function generation
         flood_damage = 0.1746 * math.log(flood_depth) + 0.6483
     
-    if self.current_adoptation != "None": #this is only the case if already adapted in the past
-        flood_damage = flood_damage/(self.adaptation_posibilites.index(self.current_adoptation))
+    if self.current_adaptation != "None": #this is only the case if already adapted in the past
+        flood_damage = flood_damage/(self.adaptation_posibilites.index(self.current_adaptation))
     return flood_damage
 
 def prospect_theory_score(friends_adapted, risk_behavior, number_of_households, media_coverage, flood_damage_estimated):
     #score between 1 and 0
-    #agent looks at the problem subjectively so if they have allready experianced a flood or if there is media interaction they will behave diffently
+    #agent looks at the problem subjectively so if they have already experienced a flood or if there is media interaction they will behave diffently
     #check if a neighbor has been flooded if so the agent is more 
-    #percieved risk declines after a while
+    #perceived risk declines after a while
     friend_score = (len(friends_adapted)/(number_of_households-1))
     media_score = 0
 
@@ -242,7 +242,7 @@ def prospect_theory_score(friends_adapted, risk_behavior, number_of_households, 
     
 def risk_score():
     #creating a normal random distro between 0 and 1
-    #the avarage was tested to be between 0.48 and 0.53
+    #the average was tested to be between 0.48 and 0.53
     dist = np.random.normal(0.5,0.5,1000) #
     dist_positive = dist[dist>=0]
     risk = dist_positive[dist_positive <= 1]

@@ -125,7 +125,7 @@ class AdaptationModel(Model):
                         "FloodDepthActual": "flood_depth_actual",
                         "FloodDamageActual" : "flood_damage_actual",
                         "IsAdapted": "is_adapted",
-                        "CurrentAdoptation": "current_adoptation",
+                        "Currentadaptation": "current_adaptation",
                         "Money": "money",
                         "IsInsured": "is_insured",
                         "FriendsCount": lambda a: a.count_friends(radius=1),
@@ -241,11 +241,11 @@ class AdaptationModel(Model):
         rain_value = self.rain_values[rain_dict_key] #this is a list
         rain_value = rain_value[self.schedule.steps]
         #print(self.rain_values)
-        rain_dict_key_avarage = (rain_dict_key[0] + rain_dict_key[1])/2
+        rain_dict_key_average = (rain_dict_key[0] + rain_dict_key[1])/2
 
         for i in government_implemetaitons: #no flood in this zone because close to implementation
-            if i.policy == "Dijks":
-                diff_location = abs(rain_dict_key_avarage - i.location.x)
+            if i.policy == "Dikes":
+                diff_location = abs(rain_dict_key_average - i.location.x)
                 if diff_location < 100000: #
                     f = open("logs/logs.txt", "a")
                     f.write(f"no flood in zone {rain_dict_key} because of implementation\n")

@@ -26,11 +26,11 @@ class Households(Agent): #money
         self.adaptation_threshold = adaptation_threshold 
         self.moved = False
         self.insurance_price = insurance_price
-        self.money_lost_because_of_flood_adaption = 0
+        self.money_lost_because_of_flood_adaptation = 0
         self.is_insured = False
         self.income_mean = income_mean
         self.money = income_normal(46000)
-        self.current_adoptation = "None"
+        self.current_adaptation = "None"
         self.step_adapted = 0
         self.adaptation_posibilites = ["None", "SandBags", "IntenseBarricading", "Move", "GovernmentBased"]
         self.adaptation_number = 0
@@ -152,20 +152,20 @@ class Households(Agent): #money
 
     def decide_adapting_mechanism(self, prospect_score):
         if prospect_score <= self.adaptation_threshold:
-            self.current_adoptation = self.adaptation_posibilites[0]
+            self.current_adaptation = self.adaptation_posibilites[0]
             return self.adaptation_posibilites[0]
         elif self.adaptation_threshold <= prospect_score <= self.adaptation_threshold*1.2:
-            self.current_adoptation = self.adaptation_posibilites[1]
+            self.current_adaptation = self.adaptation_posibilites[1]
             if self.money - 100 >= self.money:
                 self.money -= 100
                 return self.adaptation_posibilites[1]
         elif self.adaptation_threshold <= prospect_score <= self.adaptation_threshold*1.3:
-            self.current_adoptation = self.adaptation_posibilites[2]
+            self.current_adaptation = self.adaptation_posibilites[2]
             if self.money - 1000 >= self.money:
                 self.money -= 1000
                 return self.adaptation_posibilites[2]
         else:
-            self.current_adoptation = self.adaptation_posibilites[3]
+            self.current_adaptation = self.adaptation_posibilites[3]
             return self.adaptation_posibilites[3]
 
     def step(self):
@@ -205,7 +205,7 @@ class Households(Agent): #money
         #here we should say that if a household is close to a government implementation they are automatically adapted and nothing else realy matters past that point 
         if adapted_because_of_government_implementation(implementation_agents=self.model.implementation_agents, agent=self):
             self.is_adapted = True
-            self.current_adoptation = "GovernmentBased"
+            self.current_adaptation = "GovernmentBased"
         elif self.decide_if_adapted(prospect_score) and self.moved == False: #takes two more from self.
             adaptation_mechanism = self.decide_adapting_mechanism(prospect_score)
             self.is_adapted = True  # Agent adapts to flooding so it moves to a higher area  Maybe only move if that is tha last resort
@@ -219,7 +219,7 @@ class Households(Agent): #money
                     cost_of_moving = random.randint(1000,5000) 
                     if cost_of_moving <= self.money:
                         self.money -= cost_of_moving#if they move it will cost between 1000 and 5000
-                        self.money_lost_because_of_flood_adaption += cost_of_moving
+                        self.money_lost_because_of_flood_adaptation += cost_of_moving
                         if self.is_insured:
                             self.model.insurance_agent.pay_agents(self, cost_of_moving)
                     else:
@@ -231,7 +231,7 @@ class Households(Agent): #money
                 self.moved = True
         elif self.flood_depth_estimated > 0.5 and self.model.schedule.steps - self.step_adapted > 4: #when the flood depth in theory can be higher than the actor is no longer adapted, value based on function calculate basic flood damage
             self.is_adapted = False
-            self.moved = False #gotte reset this
+            self.moved = False #got to reset this
         
 # Define the Government agent class
 class Government(Agent):
@@ -263,7 +263,7 @@ class Government(Agent):
                 adapted.append(a)
         return adapted
     
-    def count_friends(self, radius): #has to be here because of the lamda function in the model can change this later
+    def count_friends(self, radius): #has to be here because of the lambda function in the model can change this later
         pass
 
     def expected_damage(self, households):
@@ -287,14 +287,14 @@ class Government(Agent):
             return 0
     
     def decide_policy(self, households, adapted_households, money_available):
-        policies = ['None', 'Dijks', 'Water locks']
+        policies = ['None', 'Dikes', 'Water locks']
         policy = 'None'
         ratio_adapted = len(adapted_households)/len(households)
         expected_damage = self.expected_damage(households=households)
         actual_damage = self.actual_damage(households=households)
 
         policy_number = (ratio_adapted + expected_damage + actual_damage)/3
-        if 0.4 <= policy_number <= 0.5 and money_available > 1000000: #check how expencive dijks are
+        if 0.4 <= policy_number <= 0.5 and money_available > 1000000: #check how expensive dikes are
             policy = policies[1]
             self.model.set_current_policy(policy)
             self.money -= 1000000
@@ -304,10 +304,10 @@ class Government(Agent):
             self.money -= 3000000
         return policy
 
-    def spend_on_other_expences(self):
-        expence = random.randint(17000, 20000) * self.model.number_of_households
-        if self.money >= expence:
-            self.money -= expence
+    def spend_on_other_expenses(self):
+        expense = random.randint(17000, 20000) * self.model.number_of_households
+        if self.money >= expense:
+            self.money -= expense
         else:
             self.money = 0
     
@@ -320,7 +320,7 @@ class Government(Agent):
         households = [ agent for agent in agents if agent.type == "household" ] #here there is one empty agent in the list
         adapted_households = self.list_adapted(households)
         #amount_adapted = len(adapted_households) #amount of households already adapted 
-        self.spend_on_other_expences() #need to spend money on other things as well
+        self.spend_on_other_expenses() #need to spend money on other things as well
         self.generate_other_incomes() #things like business taxes and among other things
         
         #If the flood damage is high and there are little households adaptd #check the policy every 5 steps and 
@@ -348,7 +348,7 @@ class Media(Agent):
     def count_friends(self, radius): #has to be here because of the lamda function in the model can change this later
         pass
 
-    def avarge_flood_damage(self, agents):
+    def average_flood_damage(self, agents):
         damage = 0
         for a in agents:
             damage += a.flood_damage_actual
@@ -360,12 +360,12 @@ class Media(Agent):
     def step(self):
         agents = self.model.schedule.agents
         households = [ agent for agent in agents if agent.type == "household" ] #here there is one empty agent in the list
-        avarge_damage = self.avarge_flood_damage(households)
+        average_damage = self.average_flood_damage(households)
 
-        if avarge_damage < 0.2: #later we can base these numbers on sources. 
+        if average_damage < 0.2: #later we can base these numbers on sources. 
             self.coverage = 0
             self.model.set_media_attention(0)
-        elif avarge_damage < 0.5:
+        elif average_damage < 0.5:
             self.coverage = 1
             self.model.set_media_attention(1)
         else:
@@ -373,7 +373,7 @@ class Media(Agent):
             self.model.set_media_attention(2)
         if self.model.schedule.steps % 10 == 0: #give an update every 10 steps
             f = open("logs/logs.txt", "a")
-            f.write(f"Step: {self.model.schedule.steps} Agent: Media ther avarage damage is {avarge_damage} and the coverage {self.coverage_types[self.coverage]}\n")
+            f.write(f"Step: {self.model.schedule.steps} Agent: Media their average damage is {average_damage} and the coverage {self.coverage_types[self.coverage]}\n")
             f.close()
     
 class Government_policy_implementation(Agent):
