@@ -103,7 +103,9 @@ class Households(Agent): #money
             f.write(f"[Step: {self.model.schedule.steps}] Agent: {self.unique_id} The scores are risk:{self.risk_behavior}, prospect_score: {prospect_score} and flood_damage est:{self.flood_damage_estimated} \n")
             f.close()
             
-        if prospect_score > self.adaptation_threshold: #adaptation by prospect theory 
+        if prospect_score[0] >= prospect_score[1]:
+            return False
+        else:
             return True
     
     def pay_taxes(self):
@@ -133,7 +135,7 @@ class Households(Agent): #money
 
     def decide_on_insurance(self):
         estimated_flood_damage = self.flood_damage_estimated
-        neigbors = self.model.grid.get_neighbors(self.pos) #prospect theory aspect
+        neigbors = self.model.grid.get_neighbors(self.pos)
         neigbors_insured = 0
         social_score = 0
 
@@ -150,23 +152,22 @@ class Households(Agent): #money
             return True
         return False
 
-    def decide_adapting_mechanism(self, prospect_score):
-        if prospect_score <= self.adaptation_threshold:
-            self.current_adaptation = self.adaptation_posibilites[0]
-            return self.adaptation_posibilites[0]
-        elif self.adaptation_threshold <= prospect_score <= self.adaptation_threshold*1.2:
-            self.current_adaptation = self.adaptation_posibilites[1]
-            if self.money - 100 >= self.money:
-                self.money -= 100
+    def decide_adapting_mechanism(self, flood_depth_estimated):
+        if flood_depth_estimated <= self.adaptation_threshold:
+            cost = np.random.randint(100, 500)
+            if self.money - cost >= cost:
+                self.money -= cost
+                self.current_adaptation = self.adaptation_posibilites[1]
                 return self.adaptation_posibilites[1]
-        elif self.adaptation_threshold <= prospect_score <= self.adaptation_threshold*1.3:
-            self.current_adaptation = self.adaptation_posibilites[2]
-            if self.money - 1000 >= self.money:
-                self.money -= 1000
+        elif flood_depth_estimated <= self.adaptation_threshold*1.3:
+            cost = np.random.randint(500, 2000)
+            if self.money - cost >= self.money:
+                self.money -= cost
+                self.current_adaptation = self.adaptation_posibilites[2]
                 return self.adaptation_posibilites[2]
         else:
             self.current_adaptation = self.adaptation_posibilites[3]
-            return self.adaptation_posibilites[3]
+            return self.adaptation_posibilites[3] #for moving the costs  get taken later
 
     def step(self):
         # Logic for adaptation based on estimated flood damage and a random chance.
@@ -201,20 +202,22 @@ class Households(Agent): #money
             self.pay_insurance_risk_based(self.model.insurance_agent)
         
         friends_adapted = self.count_friends_adapted(radius=1)
-        prospect_score = prospect_theory_score(friends_adapted=friends_adapted, risk_behavior=self.risk_behavior, number_of_households=self.model.number_of_households, media_coverage=self.model.media_coverage, flood_damage_estimated= self.flood_damage_estimated)
+        probabilty_flood = 0.1 #probability of a flood is about 0.1 now
+        cost_of_adapting_estimate = np.random.randint(100,5000) #based on adapting mechanism that h
+        prospect_score = prospect_theory_score(agent=self, probability_of_flood=probabilty_flood, friends_adapted=friends_adapted, risk_behavior=self.risk_behavior, number_of_households=self.model.number_of_households, media_coverage=self.model.media_coverage/2, flood_damage_estimated= self.flood_damage_estimated, cost_of_adapting=cost_of_adapting_estimate)
         #here we should say that if a household is close to a government implementation they are automatically adapted and nothing else realy matters past that point 
         if adapted_because_of_government_implementation(implementation_agents=self.model.implementation_agents, agent=self):
             self.is_adapted = True
             self.current_adaptation = "GovernmentBased"
         elif self.decide_if_adapted(prospect_score) and self.moved == False: #takes two more from self.
-            adaptation_mechanism = self.decide_adapting_mechanism(prospect_score)
+            adaptation_mechanism = self.decide_adapting_mechanism(self.flood_damage_estimated)
             self.is_adapted = True  # Agent adapts to flooding so it moves to a higher area  Maybe only move if that is tha last resort
             self.step_adapted = self.model.schedule.steps
             if adaptation_mechanism == "Move":
                 if self.model.heigh_locations:
                     location = self.model.heigh_locations[random.randint(0, len(self.model.heigh_locations)-1)]
                     x = location.x
-                    y= location.y 
+                    y = location.y 
                     x,y = move(x,y) #move to a new location that is higher and close to other high living neighborhoods
                     cost_of_moving = random.randint(1000,5000) 
                     if cost_of_moving <= self.money:
@@ -290,6 +293,7 @@ class Government(Agent):
         policies = ['None', 'Dikes', 'Water locks']
         policy = 'None'
         ratio_adapted = len(adapted_households)/len(households)
+        ratio_adapted = 1 - ratio_adapted
         expected_damage = self.expected_damage(households=households)
         actual_damage = self.actual_damage(households=households)
 
@@ -312,7 +316,7 @@ class Government(Agent):
             self.money = 0
     
     def generate_other_incomes(self):
-        incomes = random.randint(150000, 400000) 
+        incomes = random.randint(150000, 500000) 
         self.money += incomes
 
     def step(self):

@@ -221,25 +221,48 @@ def calculate_basic_flood_damage(self, flood_depth):
         flood_damage = flood_damage/(self.adaptation_posibilites.index(self.current_adaptation))
     return flood_damage
 
-def prospect_theory_score(friends_adapted, risk_behavior, number_of_households, media_coverage, flood_damage_estimated):
-    #score between 1 and 0
-    #agent looks at the problem subjectively so if they have already experienced a flood or if there is media interaction they will behave diffently
-    #check if a neighbor has been flooded if so the agent is more 
-    #perceived risk declines after a while
+def prospect_theory_score(agent, probability_of_flood, friends_adapted, risk_behavior, number_of_households, media_coverage, flood_damage_estimated, cost_of_adapting):
+    """
+        Based on this article: https://onlinelibrary-wiley-com.tudelft.idm.oclc.org/doi/10.1111/risa.12740
+        The score takes into account that low probability high risks situations are overweighted. 
+        It also takes various social scores. 
+    """
+    
     friend_score = (len(friends_adapted)/(number_of_households-1))
-    media_score = 0
-
-    if media_coverage == 1: #small coverage 
-        media_score = 0.5
-    elif media_coverage == 2:
-        media_score = 1
-    else:
-        media_score = 0
+    basian_weight = 0
+    lambda_eq = np.random.normal(2.25, 1)
+    theta = np.random.normal(0.88, 0.065) #found by harrison and rutstrom 
+    delta = np.random.normal(0.69, 0.025)
     
-    score = (friend_score + media_score + flood_damage_estimated + risk_behavior )/4
+    flood_damage_estimated_money = flood_damage_estimated*agent.money #convert the flood damage to be economical
+    #print(f"{flood_damage_estimated_money} and {lambda_eq} and {theta}")
+    
+    if agent.is_insured:
+        utility_1 = -cost_of_adapting ** theta
+        utility =  -lambda_eq * utility_1
         
-    return score
+        utility_no_action_1 = -flood_damage_estimated_money ** theta
+        utility_no_action = -lambda_eq * utility_no_action_1
+    else:
+        utility = -lambda_eq * (-cost_of_adapting ** theta)
     
+        utility_no_action_1 = -flood_damage_estimated_money ** theta
+        utility_no_action = -lambda_eq * utility_no_action_1
+        
+    risk_perception = (friend_score + media_coverage + flood_damage_estimated + risk_behavior )/4 #this is a bit different from the theory but just in implementation
+    
+    basian_weight_top_1 = (10**((2*risk_perception)-1)*probability_of_flood)
+    basian_weight_top_2 = basian_weight_top_1**delta
+    basian_weight_bottom = basian_weight_top_2 + ((1-basian_weight_top_1)**delta)**(1/delta)
+    basian_weight = basian_weight_top_2/basian_weight_bottom
+
+    prospect_theory_score_action = basian_weight * utility
+    prospect_theory_score_no_action = basian_weight * utility_no_action
+    
+    #print(f"prospect theory score no action: {prospect_theory_score_no_action}, and action: {prospect_theory_score_action}")
+        
+    return [prospect_theory_score_no_action, prospect_theory_score_action, risk_perception]
+
 def risk_score():
     #creating a normal random distro between 0 and 1
     #the average was tested to be between 0.48 and 0.53
