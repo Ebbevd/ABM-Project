@@ -31,6 +31,7 @@ class Households(Agent): #money
         self.income_mean = income_mean
         self.money = income_normal(46000)
         self.current_adaptation = "None"
+        self.insurance_benefit_estimated = np.random.randint(100, 5000)
         self.step_adapted = 0
         self.adaptation_posibilites = ["None", "SandBags", "IntenseBarricading", "Move", "GovernmentBased"]
         self.adaptation_number = 0

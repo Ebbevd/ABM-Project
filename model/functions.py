@@ -238,7 +238,7 @@ def prospect_theory_score(agent, probability_of_flood, friends_adapted, risk_beh
     #print(f"{flood_damage_estimated_money} and {lambda_eq} and {theta}")
     
     if agent.is_insured:
-        utility_1 = -cost_of_adapting ** theta
+        utility_1 = (-cost_of_adapting+agent.insurance_benefit_estimated) ** theta
         utility =  -lambda_eq * utility_1
         
         utility_no_action_1 = -flood_damage_estimated_money ** theta
