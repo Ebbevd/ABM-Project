@@ -18,13 +18,14 @@ class Households(Agent): #money
     In a real scenario, this would be based on actual geographical data or more complex logic.
     """
 
-    def __init__(self, unique_id, model, adaptation_threshold, income_mean, insurance_price):
+    def __init__(self, unique_id, model, adaptation_threshold, income_mean, insurance_price, insurance):
         super().__init__(unique_id, model)
         self.is_adapted = False  # Initial adaptation status set to False
         self.risk_behavior = risk_score() #this would be nice as a normal curve
         self.type = "household"
         self.adaptation_threshold = adaptation_threshold 
         self.moved = False
+        self.insurance = insurance
         self.insurance_price = insurance_price
         self.money_lost_because_of_flood_adaptation = 0
         self.is_insured = False
@@ -192,7 +193,8 @@ class Households(Agent): #money
         self.pay_taxes() #first pay tax
         self.earn_money() #than earn money
         if self.model.schedule.steps %5 == 0 or self.model.schedule.steps == 0 and self.is_adapted == False: #decide if agent wants insurance do not get insurance if already adapted
-            self.is_insured = self.decide_on_insurance() #decide if the agent wants an insurance
+            if self.insurance:
+                self.is_insured = self.decide_on_insurance() #decide if the agent wants an insurance
             if self.model.introduce_inequality:
                 self.take_money() #inspired by simple economy agents can also take money from other agents
         if self.flood_depth_estimated < 0.025:
@@ -245,11 +247,12 @@ class Government(Agent):
     - regulations
     - measurements 
     """
-    def __init__(self, unique_id, model, money):
+    def __init__(self, unique_id, model, money, implementations):
         super().__init__(unique_id, model)
         self.type = 'government'
         self.money = money
         self.policy = None
+        self.implementations = implementations
         self.amount_of_policies = 0
         self.tax_rates = {
             0: 0,
@@ -329,7 +332,7 @@ class Government(Agent):
         self.generate_other_incomes() #things like business taxes and among other things
         
         #If the flood damage is high and there are little households adaptd #check the policy every 5 steps and 
-        if self.model.schedule.steps % 5 == 0:
+        if self.model.schedule.steps % 5 == 0 and self.implementations:
             self.policy = self.decide_policy(households=households, adapted_households=adapted_households, money_available=self.money)
             # Implement the policy so add the implementation to the schedule
             if self.policy != "None" and self.amount_of_policies<=10:

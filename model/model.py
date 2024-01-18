@@ -33,6 +33,7 @@ class AdaptationModel(Model):
                  # The social network structure that is used.
                  # Can currently be "erdos_renyi", "barabasi_albert", "watts_strogatz", or "no_network"
                  network = 'watts_strogatz',
+                 government_implementations = True,
                  # likeliness of edge being created between two nodes
                  probability_of_network_connection = 0.4,
                  introduce_inequality = False,
@@ -47,7 +48,8 @@ class AdaptationModel(Model):
                  # number of nearest neighbours for WS social network
                  number_of_nearest_neighbours = 5,
                  media_coverage = 0,
-                 adaptation_threshold = 0.3
+                 adaptation_threshold = 0.3,
+                 insurance = True
                  ):
         
         super().__init__(seed = seed)
@@ -55,7 +57,9 @@ class AdaptationModel(Model):
         # defining the variables and setting the values
         self.number_of_households = number_of_households  # Total number of household agents
         self.seed = seed #?
+        self.insurance = insurance
         self.government_money = government_money
+        self.government_implementations = government_implementations
         self.insurance_price = insurance_price
         self.insurance_money = insurance_money
         self.household_income_mean = household_income_mean
@@ -94,14 +98,14 @@ class AdaptationModel(Model):
 
         # create households through initiating a household on each node of the network graph
         for i, node in enumerate(self.G.nodes()):
-            household = Households(unique_id=i, model=self, adaptation_threshold=self.adaptation_threshold, income_mean=self.household_income_mean, insurance_price=insurance_price)
+            household = Households(unique_id=i, model=self, adaptation_threshold=self.adaptation_threshold, income_mean=self.household_income_mean, insurance_price=insurance_price, insurance=self.insurance)
             self.schedule.add(household)
             self.grid.place_agent(agent=household, node_id=node)
         
         media = Media(unique_id=i+1, model=self)
         self.schedule.add(media)
 
-        government = Government(unique_id=i+2, model=self, money=government_money)
+        government = Government(unique_id=i+2, model=self, money=government_money, implementations=self.government_implementations)
         self.schedule.add(government)
 
         insurance = Insurance(unique_id=i+3, model=self, money=insurance_money)

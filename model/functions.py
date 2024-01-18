@@ -260,7 +260,11 @@ def prospect_theory_score(agent, probability_of_flood, friends_adapted, risk_beh
     prospect_theory_score_no_action = basian_weight * utility_no_action
     
     #print(f"prospect theory score no action: {prospect_theory_score_no_action}, and action: {prospect_theory_score_action}")
-        
+    scores = {
+        "Action": prospect_theory_score_action,
+        "noAction": prospect_theory_score_no_action,
+        "riskPerception": risk_perception
+    }
     return [prospect_theory_score_no_action, prospect_theory_score_action, risk_perception]
 
 def risk_score():
