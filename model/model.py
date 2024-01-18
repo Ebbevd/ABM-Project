@@ -78,6 +78,8 @@ class AdaptationModel(Model):
         self.media_coverage = media_coverage
         self.adaptation_threshold = adaptation_threshold
         self.insurance_agent = None
+        self.government_money_spent_on_prevention = 0
+        self.household_damages = 0
         # network
         self.network = network # Type of network to be created
         self.probability_of_network_connection = probability_of_network_connection
@@ -120,6 +122,8 @@ class AdaptationModel(Model):
                         "number_of_floods": self.get_number_of_floods,
                         "current_policy": self.get_current_policy,
                         "AdaptedByGovernmentImplementation": self.adapted_because_government_measures,
+                        "moneySpentOnPrevention": self.get_government_prevention_economics,
+                        "householdFinancialDamage": self.get_total_household_damages
                         }
         
         agent_metrics = {
@@ -206,8 +210,14 @@ class AdaptationModel(Model):
     def get_number_of_floods(self):
         return self.number_of_floods
     
+    def get_government_prevention_economics(self):
+        return self.government_money_spent_on_prevention
+    
     def adapted_because_government_measures(self):
         return self.adapted_because_government
+    
+    def get_total_household_damages(self):
+        return self.household_damages
     
     def set_media_attention(self, val):
         self.media_coverage = val
@@ -280,6 +290,7 @@ class AdaptationModel(Model):
         
         The floods are devided into zones. The zones are now only on the x axis these still have to be expanded to the y axis 
         """
+        flood = False
         rain_dict_keys = self.rain_values.keys()
         for i in rain_dict_keys:
             rain_value = self.rain_values[i] #this is a list
@@ -287,17 +298,23 @@ class AdaptationModel(Model):
             if self.schedule.steps != 0: #don't flood at the start of the model run
                 if self.decide_if_flood(rain_dict_key=i,government_implemetaitons=self.implementation_agents): #this flood will later be in one of the zones that will later be determined by the agent
                     self.number_of_floods += 1
+                    flood = True
                     water_level = self.base_water_level + float(rain_value) #this should be based on the location of the agent
                     self.water_level[i] = water_level
-                
-        for agent in self.schedule.agents:
-            if agent.type == 'household':
-                # Calculate the actual flood depth as a random number between 0.5 and 1.2 times the estimated flood depth
-                for i in self.water_level:
-                    if i[0] <= agent.location.x <= i[1]:
-                        agent.flood_depth_actual = self.water_level[i] + agent.flood_depth_estimated #floodingdepth is random
-                        # calculate the actual flood damage given the actual flood depth
-                        agent.flood_damage_actual = calculate_basic_flood_damage(agent, agent.flood_depth_actual)
+        
+        if flood:
+            for agent in self.schedule.agents:
+                if agent.type == 'household':
+                    # Calculate the actual flood depth as a random number between 0.5 and 1.2 times the estimated flood depth
+                    for i in self.water_level:
+                        if i[0] <= agent.location.x <= i[1]:
+                            agent.flood_depth_actual = self.water_level[i] + agent.flood_depth_estimated #floodingdepth is random
+                            # calculate the actual flood damage given the actual flood depth
+                            agent.flood_damage_actual = calculate_basic_flood_damage(agent, agent.flood_depth_actual)
+                            
+                            flood_damage_financial = agent.flood_damage_actual * agent.money #the financial damage will be a chunk of the money the agent has with the idea that richer agents have more expensive things so hihger financial damage
+                            self.household_damages += flood_damage_financial
+                            flood = False
                 
         # Collect data and advance the model by one step
         self.datacollector.collect(self)

@@ -189,7 +189,7 @@ class Households(Agent): #money
         # calculate the estimated flood damage given the estimated flood depth. Flood damage is a factor between 0 and 1
         self.flood_damage_estimated = calculate_basic_flood_damage(self, flood_depth=self.flood_depth_estimated)
         self.flood_damage_actual = calculate_basic_flood_damage(self, flood_depth=self.flood_depth_actual)
-
+        
         self.pay_taxes() #first pay tax
         self.earn_money() #than earn money
         if self.model.schedule.steps %5 == 0 or self.model.schedule.steps == 0 and self.is_adapted == False: #decide if agent wants insurance do not get insurance if already adapted
@@ -306,10 +306,12 @@ class Government(Agent):
             policy = policies[1]
             self.model.set_current_policy(policy)
             self.money -= 1000000
+            self.model.government_money_spent_on_prevention += 1000000
         if policy_number >= 0.5 and money_available > 3000000: #this is rare but possible
             policy = policies[2]
             self.model.set_current_policy(policy)
             self.money -= 3000000
+            self.model.government_money_spent_on_prevention += 3000000
         return policy
 
     def spend_on_other_expenses(self):
