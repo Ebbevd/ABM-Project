@@ -18,5 +18,5 @@ The `model` directory contains the actual Python code for the minimal model. It 
 - `agents.py`: Defines the `Households` agent class, `Government` agents class, `Media` agents class and `Insurance` agents class,, These agents have attributes related to flood depth and damage, and their behavior is influenced by these factors. This script is crucial for modeling the impact of flooding on individual households.
 - `functions.py`: Contains utility functions for the model, including setting initial values, calculating flood damage, and processing geographical data and more. These functions are essential for data handling and mathematical calculations within the model.
 - `model.py`: The central script that sets up and runs the simulation. It integrates the agents, geographical data, and network structures to simulate the complex interactions and adaptations of households to flooding scenarios.
-- `demo.ipynb`: A Jupyter notebook titled "Flood Adaptation: Minimal Model". It demonstrates running a model and analyzing and plotting some results.
+- `adaptation_of_household.ipynb`: A Jupyter notebook titled "Flood Adaptation: Minimal Model". It demonstrates running a model and analyzing and plotting some results.
 There is also a directory `input_data` that contains the geographical data used in the model and a rain data csv.
