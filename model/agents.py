@@ -100,11 +100,11 @@ class Households(Agent): #money
                     self.money -= other_agent_score
         
     def decide_if_adapted(self, prospect_score):
-        if self.model.schedule.steps % 10 == 0: #give an update every 10 steps
+        if self.model.schedule.steps % 10 == 0 and self.model.logging: #give an update every 10 steps
             f = open("logs/logs.txt", "a")
             f.write(f"[Step: {self.model.schedule.steps}] Agent: {self.unique_id} The scores are risk:{self.risk_behavior}, prospect_score: {prospect_score} and flood_damage est:{self.flood_damage_estimated} \n")
             f.close()
-            
+                
         if prospect_score[0] >= prospect_score[1]:
             return False
         else:
@@ -381,7 +381,7 @@ class Media(Agent):
         else:
             self.coverage = 2
             self.model.set_media_attention(2)
-        if self.model.schedule.steps % 10 == 0: #give an update every 10 steps
+        if self.model.schedule.steps % 10 == 0 and self.model.logging: #give an update every 10 steps
             f = open("logs/logs.txt", "a")
             f.write(f"Step: {self.model.schedule.steps} Agent: Media their average damage is {average_damage} and the coverage {self.coverage_types[self.coverage]}\n")
             f.close()

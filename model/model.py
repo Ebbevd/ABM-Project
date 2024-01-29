@@ -26,6 +26,7 @@ class AdaptationModel(Model):
                  # flood damage related: from Huizinga, de Moel --> damage factor
                  # in dollar and adjusted for inflation to 2020 value
                  max_damage_dol_per_sqm = 1216.65,
+                 logging = False,
                  insurance_price = 200,
                  # Simplified argument for choosing flood map. Can currently be "harvey", "100yr", or "500yr".
                  flood_map_choice='harvey',
@@ -57,6 +58,7 @@ class AdaptationModel(Model):
         # defining the variables and setting the values
         self.number_of_households = number_of_households  # Total number of household agents
         self.seed = seed #?
+        self.logging = logging
         self.insurance = insurance
         self.government_money = government_money
         self.government_implementations = government_implementations
@@ -261,9 +263,10 @@ class AdaptationModel(Model):
             if i.policy == "Dikes":
                 diff_location = abs(rain_dict_key_average - i.location.x)
                 if diff_location < 100000: #
-                    f = open("logs/logs.txt", "a")
-                    f.write(f"no flood in zone {rain_dict_key} because of implementation\n")
-                    f.close()
+                    if self.logging:
+                        f = open("logs/logs.txt", "a")
+                        f.write(f"no flood in zone {rain_dict_key} because of implementation\n")
+                        f.close()
                     return False
             elif i.policy == "Water Locks":
                 if diff_location < 150000: #
