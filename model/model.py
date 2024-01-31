@@ -271,8 +271,7 @@ class AdaptationModel(Model):
             elif i.policy == "Water Locks":
                 if diff_location < 150000: #
                     return False
-
-        if float(rain_value) > 0.3: #30 mm/hour
+        if float(rain_value) > 3: #3000 mm for heavy rainfall as an assumptions
             print(f"Flood in zone {rain_dict_key}", end='\r')
             return True
         else:

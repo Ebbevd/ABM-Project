@@ -289,9 +289,10 @@ def income_normal(mean):
 
 
 def get_rain_list(steps):
-    df = pd.read_csv(r'../input_data/Delft_rain_data.csv', skiprows=27, on_bad_lines='skip', delimiter=",")
-    df = df[:8784]
-    df = df['Rain [mm/hr]']
+    #df = pd.read_csv(r'../input_data/Delft_rain_data.csv', skiprows=27, on_bad_lines='skip', delimiter=",") Delft to test
+    df = pd.read_csv(r"C:\Users\vandi\OneDrive\Bureaublad\ABM\input_data\houston_rain_data.csv", on_bad_lines='skip', delimiter=",")
+    #df = df[:8784]
+    df = df['rainfall']
     values = []
     for i in range(steps):
         value = df[np.random.randint(0, len(df))]
