@@ -198,7 +198,7 @@ class Households(Agent): #money
             if self.model.introduce_inequality:
                 self.take_money() #inspired by simple economy agents can also take money from other agents
         if self.flood_depth_estimated < 0.025:
-            self.model.heigh_locations.append(self.location)
+            self.model.height_locations.append(self.location)
         
         #Pay for insurance each step
         if self.is_insured:
@@ -217,8 +217,8 @@ class Households(Agent): #money
             self.is_adapted = True  # Agent adapts to flooding so it moves to a higher area  Maybe only move if that is tha last resort
             self.step_adapted = self.model.schedule.steps
             if adaptation_mechanism == "Move":
-                if self.model.heigh_locations:
-                    location = self.model.heigh_locations[random.randint(0, len(self.model.heigh_locations)-1)]
+                if self.model.height_locations:
+                    location = self.model.height_locations[random.randint(0, len(self.model.height_locations)-1)]
                     x = location.x
                     y = location.y 
                     x,y = move(x,y) #move to a new location that is higher and close to other high living neighborhoods
