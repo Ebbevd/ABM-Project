@@ -153,6 +153,7 @@ def get_low_locations(sample_size, corresponding_map, band, arrey_length):
     
 
 def adapted_because_of_government_implementation(implementation_agents, agent):
+    """Function that decides if an agent gets adapted because it is close to an implementation"""
     for i in implementation_agents:
         x = i.location.x
         y = i.location.y
@@ -218,7 +219,7 @@ def calculate_basic_flood_damage(self, flood_depth):
         flood_damage = 0.1746 * math.log(flood_depth) + 0.6483
     
     if self.current_adaptation != "None": #this is only the case if already adapted in the past
-        flood_damage = flood_damage/(self.adaptation_posibilites.index(self.current_adaptation))
+        flood_damage = flood_damage/(self.adaptation_posibilites.index(self.current_adaptation)) #see household agent for different addoptation options
     return flood_damage
 
 def prospect_theory_score(agent, probability_of_flood, friends_adapted, risk_behavior, number_of_households, media_coverage, flood_damage_estimated, cost_of_adapting):
@@ -266,9 +267,11 @@ def prospect_theory_score(agent, probability_of_flood, friends_adapted, risk_beh
         "noAction": prospect_theory_score_no_action,
         "riskPerception": risk_perception
     }
+    #dict not used in the end but that is a more solid way of implementing
     return [prospect_theory_score_no_action, prospect_theory_score_action, risk_perception]
 
 def risk_score():
+    """Generate a normal distrobution for the risk behavior"""
     #creating a normal random distro between 0 and 1
     #the average was tested to be between 0.48 and 0.53
     dist = np.random.normal(0.5,0.5,1000) #
@@ -282,6 +285,7 @@ def risk_score():
     return risk_pick
 
 def income_normal(mean):
+    """Generate income based on a normal dist, mean could be used if need for varying later"""
     income = np.random.normal(15000, 5000, 1000)
     income_pos = income[income>=0]
     
@@ -289,6 +293,7 @@ def income_normal(mean):
 
 
 def get_rain_list(steps):
+    """Function for getting a steps length dict with random rainvalues"""
     #df = pd.read_csv(r'../input_data/Delft_rain_data.csv', skiprows=27, on_bad_lines='skip', delimiter=",") Delft to test
     df = pd.read_csv(r"../input_data/houston_rain_data.csv", on_bad_lines='skip', delimiter=",")
     #df = df[:8784]
@@ -301,6 +306,7 @@ def get_rain_list(steps):
     return values
 
 def get_rain_dict(steps, number_of_zones, b_l, b_r, b_b, b_t): #devide the zones can do y later
+    """Putting the rain values in a list based on the number of zones used, if wanted y bounds can be added for squere zones"""
     rain_dict = {}
     x = b_l + b_r
     #y = b_b + b_t
@@ -308,18 +314,18 @@ def get_rain_dict(steps, number_of_zones, b_l, b_r, b_b, b_t): #devide the zones
     #y = y/number_of_zones
     
     for i in range(number_of_zones):
-        if i == 0:
+        if i == 0: #first run will start at the left side of the map so x cord 0
             cord = []
             cord.append(0)
             cord.append(x*(i+1))
             x = x*(i+1)
-        else:
+        else: #other zones begin at the next x cord of the zone which is the x step times zone number
             cord = []
             cord.append(x)
             cord.append(x*(i+1))
             x = x*(i+1)
             
         values = get_rain_list(steps)
-        rain_dict[tuple(cord)] = values
+        rain_dict[tuple(cord)] = values #this is a dict with the coordinate bounds of the zone and their own generated rain values for that area
     
     return rain_dict

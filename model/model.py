@@ -206,6 +206,7 @@ class AdaptationModel(Model):
         adapted_count = sum([1 for agent in self.schedule.agents if isinstance(agent, Households) and agent.is_adapted])
         return adapted_count
     
+    """Data collection variables"""
     def current_media_attention(self): #purely for data collection
         return self.media_coverage
     
@@ -230,7 +231,10 @@ class AdaptationModel(Model):
     def get_current_policy(self):
         return self.current_policy
     
+    """End of data collection variables"""
+    
     def plot_model_domain_with_agents(self):
+        """For plotting the map in the notebook"""
         fig, ax = plt.subplots()
         # Plot the model domain
         map_domain_gdf.plot(ax=ax, color='lightgrey')
@@ -254,6 +258,7 @@ class AdaptationModel(Model):
         plt.show()
     
     def decide_if_flood(self, rain_dict_key, government_implemetaitons): #rain dict key should be two x coordinate bounds
+        """Decide whether there is a flood based on the CSV file of raindata in houston"""
         rain_value = self.rain_values[rain_dict_key] #this is a list
         rain_value = rain_value[self.schedule.steps]
         #print(self.rain_values)

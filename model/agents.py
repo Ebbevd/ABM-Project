@@ -71,8 +71,10 @@ class Households(Agent): #money
         friends = self.model.grid.get_neighborhood(self.pos, include_center=False, radius=radius)
         return len(friends)
     
+    #here we can count how many of the friends are adapted.
     def count_friends_adapted(self, radius):
-        #here we can count how many of the friends are adapted.
+        """Function that counts the number of friends that have been adapted yes/nos"""
+    
         friends = self.model.grid.get_neighbors(self.pos)
         friends_adapted = []
         for i in friends:
@@ -81,6 +83,7 @@ class Households(Agent): #money
         return friends
 
     def take_money(self):
+        """Function that takes money from other agents based on chance where the richer agent has a bigger chance to win"""
         other_agent = random.sample(self.model.schedule.agents, 1)[0]
         if other_agent != self and other_agent.type == "household":
             chance_self = random.random()
@@ -100,6 +103,7 @@ class Households(Agent): #money
                     self.money -= other_agent_score
         
     def decide_if_adapted(self, prospect_score):
+        """Function that decides if an agent gets adapted yes or no. This is based on the prospect theory score, first element of the list is the score for action and the second the score against acrion"""
         if self.model.schedule.steps % 10 == 0 and self.model.logging: #give an update every 10 steps
             f = open("logs/logs.txt", "a")
             f.write(f"[Step: {self.model.schedule.steps}] Agent: {self.unique_id} The scores are risk:{self.risk_behavior}, prospect_score: {prospect_score} and flood_damage est:{self.flood_damage_estimated} \n")
@@ -111,6 +115,7 @@ class Households(Agent): #money
             return True
     
     def pay_taxes(self):
+        "Function that describes how the agent pays thair taxes based on the tax system in place. This taxes richer people more than poor people combatting inequaltiy"
         for agent in self.model.schedule.agents:
             if agent.type == "government":
                 tax_rate = agent.tax_rates
@@ -125,6 +130,7 @@ class Households(Agent): #money
                     self.money = 0 
     
     def pay_insurance_risk_based(self, insurance_agent):
+        "Pay the insurance based on how the risk behavior of the household is"
         final_amount = self.risk_behavior * self.insurance_price
         if (self.money/2) >= final_amount: #assume agents do not want to pay insurance if that consts more than half their bank account
             self.money -= final_amount
@@ -133,9 +139,11 @@ class Households(Agent): #money
             self.is_insured = False
 
     def earn_money(self):
+        "Households can earn their income each step"
         self.money += self.income
 
     def decide_on_insurance(self):
+        "Households decide if they want to be insured yes/no based on risks and friends that are adapted"
         estimated_flood_damage = self.flood_damage_estimated
         neigbors = self.model.grid.get_neighbors(self.pos)
         neigbors_insured = 0
@@ -155,6 +163,7 @@ class Households(Agent): #money
         return False
 
     def decide_adapting_mechanism(self, flood_depth_estimated):
+        """Households choose what type of adaption they do where moving is the most aggressive"""
         if flood_depth_estimated <= self.adaptation_threshold:
             cost = np.random.randint(100, 500)
             if self.money - cost >= cost:
@@ -242,10 +251,9 @@ class Households(Agent): #money
 # Define the Government agent class
 class Government(Agent):
     """
-    A government agent that currently doesn't perform any actions.
     - subsidies 
     - regulations
-    - measurements 
+    - finances
     """
     def __init__(self, unique_id, model, money, implementations):
         super().__init__(unique_id, model)
@@ -264,16 +272,18 @@ class Government(Agent):
         self.low_locations = get_low_locations(sample_size=100, corresponding_map=model.flood_map, band=model.band_flood_img, arrey_length=20)
     
     def list_adapted(self, agents):
+        """This function makes a list of all agents that have already been adapted"""
         adapted = []
         for a in agents:
             if a.is_adapted:
                 adapted.append(a)
         return adapted
     
-    def count_friends(self, radius): #has to be here because of the lambda function in the model can change this later
+    def count_friends(self, radius): #has to be here because of the lambda function in the model, easiest fix is to just put it here
         pass
 
     def expected_damage(self, households):
+        """Here the total avarage damages of all households in theory is taken"""
         total = 0
         for agent in households:
             total += agent.flood_damage_estimated
@@ -284,6 +294,7 @@ class Government(Agent):
             return 0
     
     def actual_damage(self, households):
+        """Here the actual avarage damage is calculated"""
         total = 0
         for agent in households:
             total += agent.flood_damage_actual
@@ -294,6 +305,7 @@ class Government(Agent):
             return 0
     
     def decide_policy(self, households, adapted_households, money_available):
+        """Depending on the severity of the flooding and the adaptation level of the households a policy is chosen from the list below"""
         policies = ['None', 'Dikes', 'Water locks']
         policy = 'None'
         ratio_adapted = len(adapted_households)/len(households)
@@ -307,7 +319,7 @@ class Government(Agent):
             self.model.set_current_policy(policy)
             self.money -= 1000000
             self.model.government_money_spent_on_prevention += 1000000
-        if policy_number >= 0.5 and money_available > 3000000: #this is rare but possible
+        if policy_number >= 0.5 and money_available > 3000000: #this is rarer but about 70% less than dikes
             policy = policies[2]
             self.model.set_current_policy(policy)
             self.money -= 3000000
@@ -315,6 +327,7 @@ class Government(Agent):
         return policy
 
     def spend_on_other_expenses(self):
+        """The government has other expenses for sources refer to the notebook"""
         expense = random.randint(17000, 20000) * self.model.number_of_households
         if self.money >= expense:
             self.money -= expense
@@ -322,10 +335,12 @@ class Government(Agent):
             self.money = 0
     
     def generate_other_incomes(self):
+        """The government has other incomes than taxes for sources refer to the notebook"""
         incomes = random.randint(150000, 500000) 
         self.money += incomes
 
     def step(self):
+        """Behavior of the government agent during a model step"""
         agents = self.model.schedule.agents
         households = [ agent for agent in agents if agent.type == "household" ] #here there is one empty agent in the list
         adapted_households = self.list_adapted(households)
@@ -345,6 +360,12 @@ class Government(Agent):
 
 # More agent classes can be added here, e.g. for insurance agents.
 class Media(Agent):
+    """_summary_
+
+    Args:
+        Agent (_type_): Media agent is responseble of informing the masses of the flood
+        The worse the flood event the bigger the media coverage will be.
+    """
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.type = "media"
@@ -355,10 +376,11 @@ class Media(Agent):
         }
         self.coverage = 1
     
-    def count_friends(self, radius): #has to be here because of the lamda function in the model can change this later
+    def count_friends(self, radius): #has to be here because of the lamda function in the model 
         pass
 
     def average_flood_damage(self, agents):
+        """Determine what the avarage flood damage is"""
         damage = 0
         for a in agents:
             damage += a.flood_damage_actual
@@ -387,6 +409,7 @@ class Media(Agent):
             f.close()
     
 class Government_policy_implementation(Agent):
+    """The reason this is an Agent is because it needs to get a position on the map, the esiest way to do this is to make it an agent"""
     def __init__(self, unique_id, model, position, policy):
         super().__init__(unique_id, model)
         self.location = position
@@ -401,6 +424,10 @@ class Government_policy_implementation(Agent):
 
 
 class Insurance(Agent):
+    """
+        Insurance is very simple and mostly is here to influence the behavior of households in functions under that class
+    
+    """
     def __init__(self, unique_id, model, money):
         super().__init__(unique_id, model)
         self.type = 'insurance'
